@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import BackupScreen from './components/BackupScreen.jsx'
 import HomeTab from './components/HomeTab.jsx'
 import JournalTab from './components/JournalTab.jsx'
 import LogTab from './components/LogTab.jsx'
@@ -20,9 +21,12 @@ function App() {
   const [toast, setToast] = useState('')
   // When a walk note is tapped in the Journal, the Log opens with that walk
   const [focusWalkId, setFocusWalkId] = useState(null)
+  // The Backup screen opens from Home (gear button or reminder); the tab bar stays the same
+  const [showBackup, setShowBackup] = useState(false)
 
   function goTo(tabId) {
     setFocusWalkId(null)
+    setShowBackup(false)
     setActiveTab(tabId)
   }
 
@@ -38,7 +42,8 @@ function App() {
   }
 
   let view
-  if (activeTab === 'home') view = <HomeTab onUrge={() => goTo('walk')} />
+  if (showBackup) view = <BackupScreen onBack={() => setShowBackup(false)} />
+  else if (activeTab === 'home') view = <HomeTab onUrge={() => goTo('walk')} onOpenBackup={() => setShowBackup(true)} />
   else if (activeTab === 'walk') view = <WalkTab onSaved={handleWalkSaved} />
   else if (activeTab === 'log') view = <LogTab onGoToWalk={() => goTo('walk')} initialSelectedId={focusWalkId} />
   else view = <JournalTab onOpenWalk={(id) => { setFocusWalkId(id); setActiveTab('log') }} />
@@ -47,6 +52,11 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>Urge Walk</h1>
+        {activeTab === 'home' && !showBackup && (
+          <button className="header-btn" aria-label="Backup" onClick={() => setShowBackup(true)}>
+            <span aria-hidden="true">⚙︎</span>
+          </button>
+        )}
         <p className="subtitle">One day at a time.</p>
       </header>
 

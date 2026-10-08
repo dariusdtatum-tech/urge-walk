@@ -1,13 +1,15 @@
 import { useState } from 'react'
+import { dismissNudge, loadBackupMeta, shouldNudge } from '../lib/backup.js'
+import { loadJournal } from '../lib/journal.js'
 import { isIOS } from '../lib/persist.js'
-import { loadActiveWalk } from '../lib/walkStorage.js'
+import { loadActiveWalk, loadWalks } from '../lib/walkStorage.js'
 import { loadHabits, makeId, saveHabits } from '../lib/storage.js'
 import { useToday } from '../lib/useToday.js'
 import HabitCard from './HabitCard.jsx'
 import HabitSheet from './HabitSheet.jsx'
 
 // Home tab: the clean-time tracker.
-function HomeTab({ onUrge }) {
+function HomeTab({ onUrge, onOpenBackup }) {
   const today = useToday()
   // Load saved habits once, when the tab first appears.
   const [initial] = useState(() => loadHabits())
@@ -18,6 +20,11 @@ function HomeTab({ onUrge }) {
   // null = closed, { mode: 'add' } or { mode: 'edit', habit }
   const [sheet, setSheet] = useState(null)
   const walkInProgress = loadActiveWalk() != null
+  // Gentle backup reminder (data only lives on this phone)
+  const [showNudge, setShowNudge] = useState(() => shouldNudge(
+    loadBackupMeta(),
+    initial.habits.length > 0 || loadWalks().walks.length > 0 || loadJournal().entries.length > 0,
+  ))
 
   function update(next) {
     setHabits(next)
@@ -44,6 +51,15 @@ function HomeTab({ onUrge }) {
         <div className="notice" role="status">
           <span>{notice}</span>
           <button className="icon-btn" onClick={() => setNotice('')} aria-label="Dismiss">✕</button>
+        </div>
+      )}
+
+      {showNudge && (
+        <div className="nudge" data-testid="backup-nudge">
+          <span aria-hidden="true">💾</span>
+          <span className="nudge-text">Your data lives only on this phone. It’s been a while since your last backup.</span>
+          <button className="btn btn-ghost nudge-action" onClick={onOpenBackup}>Back up</button>
+          <button className="icon-btn" aria-label="Dismiss backup reminder" onClick={() => { dismissNudge(); setShowNudge(false) }}>✕</button>
         </div>
       )}
 
