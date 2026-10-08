@@ -6,14 +6,14 @@ import ResultPill from './ResultPill.jsx'
 import WalkDetailSheet from './WalkDetailSheet.jsx'
 
 // Log tab: a summary of all walks, then the history grouped by day.
-function LogTab({ onGoToWalk }) {
+function LogTab({ onGoToWalk, initialSelectedId = null }) {
   const today = useToday()
   const [initial] = useState(() => loadWalks())
   const [walks, setWalks] = useState(initial.walks)
   const [notice, setNotice] = useState(
     initial.recovered ? 'Some saved walks were damaged and couldn’t be read. A backup was kept on this phone.' : '',
   )
-  const [selectedId, setSelectedId] = useState(null)
+  const [selectedId, setSelectedId] = useState(initialSelectedId)
   const selected = walks.find((w) => w.id === selectedId)
 
   // Save right away, then update the screen.

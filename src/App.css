@@ -472,3 +472,131 @@
 .detail-grid dt { font-size: 0.8rem; color: var(--muted); }
 .detail-grid dd { margin: 2px 0 0; font-weight: 600; }
 .sheet-danger-end { justify-content: center; }
+
+/* ---------- Journal list ---------- */
+.journal { display: flex; flex-direction: column; gap: 16px; }
+.search {
+  font: inherit;
+  font-size: 1.05rem; /* 16px+ prevents iOS zoom */
+  min-height: 48px;
+  width: 100%;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.no-results { color: var(--muted); text-align: center; padding: 12px 0; }
+.journal-title { flex: 1; font-weight: 600; overflow-wrap: anywhere; }
+.journal-mood { font-size: 1.2rem; }
+.tag-walk { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.journal-walk { border-style: dashed; }
+.journal-footnote { color: var(--muted); font-size: 0.85rem; text-align: center; }
+
+/* ---------- Journal editor (full screen) ---------- */
+.editor {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100dvh; /* replaced by the visible height when the keyboard is open */
+  z-index: 30;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.editor-heading { font-weight: 600; }
+.editor-done { min-height: 44px; padding: 0 18px; }
+.editor-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 10px 20px calc(env(safe-area-inset-bottom) + 16px);
+}
+.editor-status { min-height: 1.2em; font-size: 0.8rem; color: var(--muted); }
+.editor-title {
+  font: inherit;
+  font-size: 1.4rem;
+  font-weight: 700;
+  border: none;
+  background: none;
+  color: var(--text);
+  padding: 4px 0;
+  min-height: 44px;
+}
+.editor-title:focus, .editor-body:focus { outline: none; }
+.editor-title::placeholder, .editor-body::placeholder { color: var(--muted); opacity: 0.8; }
+
+.prompt-chip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 50%, var(--border));
+  border-radius: 14px;
+  padding: 2px 2px 2px 4px;
+}
+.prompt-text {
+  flex: 1;
+  min-height: 44px;
+  text-align: left;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.mood-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.mood {
+  min-height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+}
+.mood-emoji { font-size: 1.35rem; line-height: 1; }
+.mood-label { font-size: 0.72rem; font-weight: 600; }
+.mood.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  color: var(--text);
+}
+
+.editor-body {
+  flex: 1;
+  min-height: 180px;
+  font: inherit;
+  font-size: 1.05rem; /* 16px+ prevents iOS zoom */
+  line-height: 1.6;
+  border: none;
+  background: none;
+  color: var(--text);
+  resize: none;
+  padding: 0;
+}
+.editor-delete { align-self: center; }

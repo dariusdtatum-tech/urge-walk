@@ -32,17 +32,18 @@ export function dayLabel(dayKey, todayKey) {
 }
 
 // Newest first, grouped by local day: [{ key, label, walks: [...] }]
-export function groupByDay(walks, todayKey = todayISO()) {
-  const sorted = [...walks].sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt))
+// `getTime` picks the ISO time to sort/group by (walks use startedAt; the Journal passes its own).
+export function groupByDay(items, todayKey = todayISO(), getTime = (w) => w.startedAt) {
+  const sorted = [...items].sort((a, b) => Date.parse(getTime(b)) - Date.parse(getTime(a)))
   const groups = []
-  for (const w of sorted) {
-    const key = localDayKey(w.startedAt)
+  for (const item of sorted) {
+    const key = localDayKey(getTime(item))
     let group = groups[groups.length - 1]
     if (!group || group.key !== key) {
       group = { key, label: dayLabel(key, todayKey), walks: [] }
       groups.push(group)
     }
-    group.walks.push(w)
+    group.walks.push(item)
   }
   return groups
 }

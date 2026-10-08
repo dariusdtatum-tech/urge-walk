@@ -8,7 +8,7 @@ A simple installable web app (PWA) that helps you ride out an urge by taking a s
 - **Home** — clean-time tracker (add habits with a start date, see days clean, edit/reset/delete) and a shortcut to the urge walk.
 - **Walk** — "I have an urge" button and a 5 / 10 / 15-minute walk timer with pause, end early, and a short check-in afterwards. The timer is based on saved timestamps, so it stays correct if the screen locks or the app is closed.
 - **Log** — summary (urges walked off, Yes / Kinda / No, minutes walked) and history grouped by day; tap a walk to edit its result/note or delete it.
-- **Journal** — placeholder.
+- **Journal** — private entries (optional title, mood, writing prompts) with drafts autosaved as you type, search, and your walk notes shown alongside (read from the walk log, not copied).
 
 **iPhone note:** iOS keeps separate data for the Home Screen app and for Safari, and removing the Home Screen icon deletes that app's data. Pick one place to use it.
 
@@ -31,6 +31,8 @@ npm run preview    # serve the production build (http://localhost:4173/urge-walk
 | `urgewalk.v1.habits` | `{ version: 1, habits: [{ id, name, startDate: 'YYYY-MM-DD' }] }` |
 | `urgewalk.v1.walks` | `{ version: 1, walks: [{ id, startedAt, endedAt, plannedMinutes, actualSeconds, endedEarly, result: 'yes' \| 'kinda' \| 'no' \| null, note }] }` |
 | `urgewalk.v1.activeWalk` | the walk in progress (removed when it's saved) |
+| `urgewalk.v1.journal` | `{ version: 1, entries: [{ id, createdAt, updatedAt, title, body, mood }] }` |
+| `urgewalk.v1.journalDraft` | the entry being written (removed on Done/Discard) |
 | `urgewalk.v1.walkPrefs` | `{ version: 1, minutes }` — last chosen walk length |
 
 Damaged data is copied to `<key>.corrupt-<timestamp>` instead of being deleted.

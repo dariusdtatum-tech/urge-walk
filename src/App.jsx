@@ -1,34 +1,30 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import HomeTab from './components/HomeTab.jsx'
+import JournalTab from './components/JournalTab.jsx'
 import LogTab from './components/LogTab.jsx'
 import WalkTab from './components/WalkTab.jsx'
 
-// The four tabs in the bottom bar. Journal is still a placeholder.
+// The four tabs in the bottom bar.
 const TABS = [
   { id: 'home', label: 'Home', icon: '🏠' },
   { id: 'walk', label: 'Walk', icon: '🚶' },
   { id: 'log', label: 'Log', icon: '📋' },
-  { id: 'journal', label: 'Journal', icon: '📓', blurb: 'Your private journal will live here.' },
+  { id: 'journal', label: 'Journal', icon: '📓' },
 ]
-
-function Placeholder({ tab }) {
-  return (
-    <section className="card">
-      <div className="card-icon" aria-hidden="true">{tab.icon}</div>
-      <h2>{tab.label}</h2>
-      <p>{tab.blurb}</p>
-      <p className="muted">Coming soon.</p>
-    </section>
-  )
-}
 
 function App() {
   // Which tab is showing right now
   const [activeTab, setActiveTab] = useState('home')
   // A short message shown at the top after saving a walk
   const [toast, setToast] = useState('')
-  const tab = TABS.find((t) => t.id === activeTab)
+  // When a walk note is tapped in the Journal, the Log opens with that walk
+  const [focusWalkId, setFocusWalkId] = useState(null)
+
+  function goTo(tabId) {
+    setFocusWalkId(null)
+    setActiveTab(tabId)
+  }
 
   useEffect(() => {
     if (!toast) return undefined
@@ -38,14 +34,14 @@ function App() {
 
   function handleWalkSaved(message) {
     setToast(message)
-    setActiveTab('home')
+    goTo('home')
   }
 
   let view
-  if (activeTab === 'home') view = <HomeTab onUrge={() => setActiveTab('walk')} />
+  if (activeTab === 'home') view = <HomeTab onUrge={() => goTo('walk')} />
   else if (activeTab === 'walk') view = <WalkTab onSaved={handleWalkSaved} />
-  else if (activeTab === 'log') view = <LogTab onGoToWalk={() => setActiveTab('walk')} />
-  else view = <Placeholder tab={tab} />
+  else if (activeTab === 'log') view = <LogTab onGoToWalk={() => goTo('walk')} initialSelectedId={focusWalkId} />
+  else view = <JournalTab onOpenWalk={(id) => { setFocusWalkId(id); setActiveTab('log') }} />
 
   return (
     <div className="app">
@@ -68,7 +64,7 @@ function App() {
           <button
             key={t.id}
             className={t.id === activeTab ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab(t.id)}
+            onClick={() => goTo(t.id)}
             aria-current={t.id === activeTab ? 'page' : undefined}
           >
             <span className="tab-icon" aria-hidden="true">{t.icon}</span>
