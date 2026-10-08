@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import HomeTab from './components/HomeTab.jsx'
+import LogTab from './components/LogTab.jsx'
 import WalkTab from './components/WalkTab.jsx'
 
-// The four tabs in the bottom bar. Home and Walk are real; the others are placeholders for now.
+// The four tabs in the bottom bar. Journal is still a placeholder.
 const TABS = [
   { id: 'home', label: 'Home', icon: '🏠' },
   { id: 'walk', label: 'Walk', icon: '🚶' },
-  { id: 'log', label: 'Log', icon: '📋', blurb: 'Your urge log will live here.' },
+  { id: 'log', label: 'Log', icon: '📋' },
   { id: 'journal', label: 'Journal', icon: '📓', blurb: 'Your private journal will live here.' },
 ]
 
@@ -43,6 +44,7 @@ function App() {
   let view
   if (activeTab === 'home') view = <HomeTab onUrge={() => setActiveTab('walk')} />
   else if (activeTab === 'walk') view = <WalkTab onSaved={handleWalkSaved} />
+  else if (activeTab === 'log') view = <LogTab onGoToWalk={() => setActiveTab('walk')} />
   else view = <Placeholder tab={tab} />
 
   return (

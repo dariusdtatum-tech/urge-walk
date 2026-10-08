@@ -41,6 +41,11 @@ export function loadWalks(storage = globalThis.localStorage) {
   return { walks: items, recovered }
 }
 
+// Replace the whole list (used by the Log tab after an edit or delete).
+export function saveWalks(walks, storage = globalThis.localStorage) {
+  return writeList(WALKS_KEY, 'walks', walks, storage)
+}
+
 // Add one finished walk. Returns true if it was saved.
 export function appendWalk(record, storage = globalThis.localStorage) {
   const { walks } = loadWalks(storage)

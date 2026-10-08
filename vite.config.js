@@ -45,4 +45,8 @@ export default defineConfig({
   preview: {
     allowedHosts: true,
   },
+  // Unit tests run in a fixed time zone with daylight saving, so day-grouping tests are stable.
+  test: {
+    env: { TZ: 'America/New_York' },
+  },
 })

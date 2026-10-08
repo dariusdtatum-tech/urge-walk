@@ -46,3 +46,9 @@ h1, h2, p { margin: 0; }
 @media (prefers-color-scheme: light) {
   :root { --danger: #c5362c; --on-accent: #ffffff; --overlay: rgba(10, 20, 30, 0.35); }
 }
+
+/* Calm result colors for the Log */
+:root { --res-yes: #7dd3c0; --res-kinda: #e8c27a; --res-no: #9fb3c8; --res-skip: #6b7c90; }
+@media (prefers-color-scheme: light) {
+  :root { --res-yes: #1f8a78; --res-kinda: #a87412; --res-no: #4f6880; --res-skip: #7a8a9b; }
+}

@@ -7,7 +7,8 @@ A simple installable web app (PWA) that helps you ride out an urge by taking a s
 **Status:**
 - **Home** — clean-time tracker (add habits with a start date, see days clean, edit/reset/delete) and a shortcut to the urge walk.
 - **Walk** — "I have an urge" button and a 5 / 10 / 15-minute walk timer with pause, end early, and a short check-in afterwards. The timer is based on saved timestamps, so it stays correct if the screen locks or the app is closed.
-- **Log**, **Journal** — placeholders.
+- **Log** — summary (urges walked off, Yes / Kinda / No, minutes walked) and history grouped by day; tap a walk to edit its result/note or delete it.
+- **Journal** — placeholder.
 
 **iPhone note:** iOS keeps separate data for the Home Screen app and for Safari, and removing the Home Screen icon deletes that app's data. Pick one place to use it.
 
