@@ -23,6 +23,8 @@ export const CUSTOM_MIN = 1
 export const CUSTOM_MAX = 120
 export const DEFAULT_CUSTOM_MINUTES = 20
 export const MESSAGE_EVERY_MS = 2 * 60 * 1000
+export const EXTEND_MINUTES = 5
+export const MAX_PLANNED_MINUTES = 240 // "+5 min" stops here
 
 // Keep a custom length a whole number between 1 and 120 minutes.
 export function clampCustomMinutes(value) {
@@ -90,6 +92,17 @@ export function pauseWalk(walk, now) {
 export function resumeWalk(walk, now) {
   if (isEnded(walk) || !isPaused(walk)) return walk
   return { ...walk, pausedAt: null, pausedMs: walk.pausedMs + Math.max(now - walk.pausedAt, 0) }
+}
+
+// "+5 min": make a timed walk longer while it's going (walking or paused).
+// Open walks have no end, so they're left alone; so are finished walks.
+export function canExtend(walk, minutes = EXTEND_MINUTES) {
+  return !isOpen(walk) && !isEnded(walk) && walk.plannedMinutes + minutes <= MAX_PLANNED_MINUTES
+}
+
+export function extendWalk(walk, minutes = EXTEND_MINUTES) {
+  if (!canExtend(walk, minutes)) return walk
+  return { ...walk, plannedMinutes: walk.plannedMinutes + minutes }
 }
 
 // Close out the walk.

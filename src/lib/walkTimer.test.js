@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   CUSTOM_MAX, CUSTOM_MIN, buildWalkRecord, clampCustomMinutes, elapsedMs, finishWalk, formatClock, formatElapsed,
-  isOpen, isTimeUp, messageIndex, pauseWalk, progress, remainingMs, resumeWalk, startWalk,
+  MAX_PLANNED_MINUTES, canExtend, extendWalk, isOpen, isTimeUp, messageIndex, pauseWalk, progress, remainingMs,
+  resumeWalk, startWalk,
 } from './walkTimer.js'
 
 const MIN = 60 * 1000
@@ -223,5 +224,41 @@ describe('custom length', () => {
 
   it('a 120-minute walk shows hours', () => {
     expect(formatClock(remainingMs(startWalk(120, T0, { id: 'c2' }), T0))).toBe('2:00:00')
+  })
+})
+
+describe('+5 min (timed walks only)', () => {
+  it('adds five minutes to the time left', () => {
+    const w = extendWalk(walk10())
+    expect(w.plannedMinutes).toBe(15)
+    expect(formatClock(remainingMs(w, T0 + 4 * MIN))).toBe('11:00')
+  })
+  it('works while paused and keeps the paused time', () => {
+    const paused = pauseWalk(walk10(), T0 + 2 * MIN)
+    const w = extendWalk(paused)
+    expect(w.pausedAt).toBe(T0 + 2 * MIN)
+    expect(formatClock(remainingMs(w, T0 + 9 * MIN))).toBe('13:00')
+  })
+  it('a timed walk that ends after +5 is saved with the longer plan and is not "ended early"', () => {
+    const w = extendWalk(walk10())
+    const done = finishWalk(w, T0 + 30 * MIN)
+    const rec = buildWalkRecord(done)
+    expect(rec.plannedMinutes).toBe(15)
+    expect(rec.actualSeconds).toBe(15 * 60)
+    expect(rec.endedEarly).toBe(false)
+  })
+  it('does nothing for open walks, finished walks, or past the maximum', () => {
+    const open = startWalk(null, T0, { id: 'o' })
+    expect(canExtend(open)).toBe(false)
+    expect(extendWalk(open)).toBe(open)
+    const ended = finishWalk(walk10(), T0 + MIN, { early: true })
+    expect(extendWalk(ended)).toBe(ended)
+    const long = startWalk(MAX_PLANNED_MINUTES - 3, T0, { id: 'l' })
+    expect(canExtend(long)).toBe(false)
+  })
+  it('finishing a timed walk early from the live screen marks it ended early', () => {
+    const done = finishWalk(walk10(), T0 + 4 * MIN, { early: true })
+    expect(done.endedEarly).toBe(true)
+    expect(buildWalkRecord(done).actualSeconds).toBe(240)
   })
 })

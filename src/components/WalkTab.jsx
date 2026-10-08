@@ -7,8 +7,9 @@ import {
   appendWalk, loadActiveWalk, loadWalkPrefs, plannedMinutesFor, saveActiveWalk, saveWalkPrefs,
 } from '../lib/walkStorage.js'
 import {
-  buildWalkRecord, finishWalk, isEnded, isPaused, isTimeUp, pauseWalk, resumeWalk, startWalk,
+  buildWalkRecord, extendWalk, finishWalk, isEnded, isOpen, isPaused, isTimeUp, pauseWalk, resumeWalk, startWalk,
 } from '../lib/walkTimer.js'
+import PageHeader from './PageHeader.jsx'
 import WalkActive from './WalkActive.jsx'
 import WalkFinish from './WalkFinish.jsx'
 import WalkStart from './WalkStart.jsx'
@@ -16,13 +17,20 @@ import WalkStart from './WalkStart.jsx'
 // Walk tab: start screen -> walk in progress -> finish screen.
 // The walk in progress is saved to the phone on every change, so closing the app
 // or locking the screen never loses it; the time is worked out from timestamps.
-function WalkTab({ onSaved }) {
+function WalkTab({ onSaved, onFocusChange = () => {}, plusCount = 0 }) {
   const [walk, setWalk] = useState(() => loadActiveWalk())
   const [prefs, setPrefs] = useState(() => loadWalkPrefs()) // { choice, customMinutes }
   const [now, setNow] = useState(() => Date.now())
 
   const walking = walk != null && !isEnded(walk) && !isPaused(walk)
   useWakeLock(walking)
+
+  // Focus mode (no header or tab bar) for as long as the walk is live, paused included.
+  const live = walk != null && !isEnded(walk)
+  useEffect(() => {
+    onFocusChange(live)
+  }, [live, onFocusChange])
+  useEffect(() => () => onFocusChange(false), [onFocusChange])
 
   // Save every change right away (synchronously), then update the screen.
   function commit(next) {
@@ -77,10 +85,20 @@ function WalkTab({ onSaved }) {
   }
 
   if (!walk) {
-    return <WalkStart prefs={prefs} onChangePrefs={handleChangePrefs} onStart={handleStart} />
+    return (
+      <>
+        <PageHeader title="Walk" />
+        <WalkStart prefs={prefs} onChangePrefs={handleChangePrefs} onStart={handleStart} plusCount={plusCount} />
+      </>
+    )
   }
   if (isEnded(walk)) {
-    return <WalkFinish walk={walk} onSave={handleSave} onSkip={() => handleSave({}, true)} />
+    return (
+      <>
+        <PageHeader title="Walk" />
+        <WalkFinish walk={walk} onSave={handleSave} onSkip={() => handleSave({}, true)} />
+      </>
+    )
   }
   return (
     <WalkActive
@@ -88,8 +106,12 @@ function WalkTab({ onSaved }) {
       now={now}
       onPause={() => commit(pauseWalk(walk, Date.now()))}
       onResume={() => { unlockAudio(); const t = Date.now(); setNow(t); commit(resumeWalk(walk, t)) }}
-      onEndEarly={() => commit(finishWalk(walk, Date.now(), { early: true }))}
-      onFinish={() => { commit(finishWalk(walk, Date.now())); playChime() }}
+      onExtend={() => commit(extendWalk(walk))}
+      onFinish={() => {
+        // Timed walk finished before its time = ended early (no chime); open walks always chime.
+        commit(finishWalk(walk, Date.now(), { early: true }))
+        if (isOpen(walk)) playChime()
+      }}
     />
   )
 }

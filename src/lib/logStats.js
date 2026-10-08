@@ -93,3 +93,37 @@ export function finishedLabel(w) {
   if (w.plannedMinutes == null) return 'Open walk'
   return w.endedEarly ? 'Ended early' : 'Full walk'
 }
+
+// ---------- Outcomes ----------
+// yes = Passed (mint), kinda = Kinda (amber), no = Didn't pass (grey), null = No check-in (dim grey).
+// "Didn't pass" is how one urge went. It is not a relapse and never touches the clean-day count.
+export const OUTCOME_ORDER = ['yes', 'kinda', 'no']
+export const OUTCOME_LABELS = { yes: 'Passed', kinda: 'Kinda', no: 'Didn’t pass', skipped: 'No check-in' }
+export const outcomeKey = (result) => (OUTCOME_ORDER.includes(result) ? result : 'skipped')
+
+// "This week" marks on the Log: the last 7 days ending today, oldest first.
+// [{ key, label: 'Fr', isToday, count, outcomes: ['yes', 'kinda'] (distinct, in a fixed order), state }]
+// state: 'none' (no urge logged), 'skipped' (walks without a check-in), or the outcomes joined with '+'.
+export function weekDays(walks, todayKey = todayISO()) {
+  const t = parseISODate(todayKey)
+  const days = []
+  for (let i = 6; i >= 0; i -= 1) {
+    const date = new Date(t.y, t.m - 1, t.d - i)
+    const key = todayISO(date)
+    const label = date.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2)
+    days.push({ key, label, isToday: i === 0, count: 0, found: new Set() })
+  }
+  for (const w of walks) {
+    const day = days.find((d) => d.key === localDayKey(w.startedAt))
+    if (!day) continue
+    day.count += 1
+    day.found.add(outcomeKey(w.result))
+  }
+  return days.map(({ found, ...d }) => {
+    const outcomes = OUTCOME_ORDER.filter((o) => found.has(o))
+    let state = 'none'
+    if (outcomes.length > 0) state = outcomes.join('+')
+    else if (d.count > 0) state = 'skipped'
+    return { ...d, outcomes, state }
+  })
+}

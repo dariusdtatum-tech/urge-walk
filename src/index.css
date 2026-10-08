@@ -1,13 +1,65 @@
-/* Global colors and base styles. Dark by default, calm mint accent. */
-:root {
-  --bg: #0b121a;
-  --surface: #142130;
-  --border: #22344a;
-  --text: #e6eef5;
-  --muted: #8a9bb0;
-  --accent: #7dd3c0;
+/* Self-hosted fonts (SIL Open Font License, see assets/fonts/OFL-*.txt). Latin only; anything
+   else falls back to the system font. Nothing is loaded from a font CDN. */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('./assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2') format('woff2-variations'),
+    url('./assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 1000;
+  src: url('./assets/fonts/nunito-latin-wght-normal.woff2') format('woff2-variations'),
+    url('./assets/fonts/nunito-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif;
+/* Colors. Dark navy/teal by default: cyan for the rings, active tab and +; mint for main actions
+   and "passed"; amber for "kinda"; grey for "didn't pass". No red for outcomes. */
+:root {
+  --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-num: 'Nunito', ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  --bg: #07141a;
+  --bg-grad: radial-gradient(130% 70% at 50% -5%, #15363f 0%, #0b1f27 48%, #061118 100%);
+  --surface: #11252c;   /* sheets and dialogs */
+  --border: #24424c;
+  --card: rgba(24, 46, 54, 0.6);
+  --card-border: rgba(255, 255, 255, 0.085);
+  --glass: rgba(18, 36, 43, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --inset: rgba(0, 0, 0, 0.22);
+  --hairline: rgba(255, 255, 255, 0.09);
+  --track: rgba(61, 228, 255, 0.13);
+  --empty-ring: rgba(255, 255, 255, 0.26);
+  --text: #eef6f7;
+  --text-soft: rgba(238, 246, 247, 0.84);
+  --muted: #93a8af;
+  --accent: #5eead4;      /* mint: main actions */
+  --mint-hi: #b4fbe8;
+  --cyan: #3de4ff;        /* rings, active tab, + */
+  --on-cyan: #04242c;
+  --link: #6fe3d3;
+  --link-cyan: #63d6f2;
+  --label-teal: #7fdccf;
+  --on-accent: #06221d;
+  --danger: #f28b82;      /* only for deleting things, never for outcomes */
+  --overlay: rgba(2, 8, 11, 0.62);
+
+  --res-yes: #5eead4;
+  --res-kinda: #e6b15a;
+  --res-no: #8f9ca6;
+  --res-no-text: #c3ccd2;
+  --res-skip: #5f6d78;
+
+  font-family: var(--font-ui);
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
@@ -19,12 +71,37 @@
 /* Lighter palette if the phone is in light mode */
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f4f7f9;
+    --bg: #eef5f6;
+    --bg-grad: radial-gradient(130% 70% at 50% -5%, #dcf1f3 0%, #eaf4f5 50%, #f3f7f8 100%);
     --surface: #ffffff;
-    --border: #dde5ec;
-    --text: #13202c;
-    --muted: #5d6f82;
-    --accent: #2a9d8a;
+    --border: #d3e2e6;
+    --card: rgba(255, 255, 255, 0.82);
+    --card-border: rgba(10, 50, 60, 0.09);
+    --glass: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(10, 50, 60, 0.1);
+    --inset: rgba(10, 50, 60, 0.05);
+    --hairline: rgba(10, 50, 60, 0.1);
+    --track: rgba(10, 158, 192, 0.14);
+    --empty-ring: rgba(10, 50, 60, 0.25);
+    --text: #0f2229;
+    --text-soft: rgba(15, 34, 41, 0.82);
+    --muted: #587078;
+    --accent: #13a58c;
+    --mint-hi: #4fd8bd;
+    --cyan: #0a9ec0;
+    --on-cyan: #ffffff;
+    --link: #0f8f7b;
+    --link-cyan: #0a87a6;
+    --label-teal: #0f8f7b;
+    --on-accent: #ffffff;
+    --danger: #c5362c;
+    --overlay: rgba(10, 20, 30, 0.35);
+
+    --res-yes: #11957f;
+    --res-kinda: #b07a14;
+    --res-no: #7b8a95;
+    --res-no-text: #55656f;
+    --res-skip: #a3b0b8;
     color-scheme: light;
   }
 }
@@ -34,21 +111,11 @@
 html, body, #root { height: 100%; margin: 0; }
 
 body {
-  background: var(--bg);
+  background: var(--bg-grad), var(--bg);
+  background-color: var(--bg);
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 h1, h2, p { margin: 0; }
-
-/* Extra colors used by the tracker */
-:root { --danger: #f28b82; --on-accent: #0b121a; --overlay: rgba(3, 8, 12, 0.6); }
-@media (prefers-color-scheme: light) {
-  :root { --danger: #c5362c; --on-accent: #ffffff; --overlay: rgba(10, 20, 30, 0.35); }
-}
-
-/* Calm result colors for the Log */
-:root { --res-yes: #7dd3c0; --res-kinda: #e8c27a; --res-no: #9fb3c8; --res-skip: #6b7c90; }
-@media (prefers-color-scheme: light) {
-  :root { --res-yes: #1f8a78; --res-kinda: #a87412; --res-no: #4f6880; --res-skip: #7a8a9b; }
-}
+button { font-family: inherit; }

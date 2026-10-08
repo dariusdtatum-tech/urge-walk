@@ -1,19 +1,14 @@
-// Small calm label for a walk's result.
-const RESULT_INFO = {
-  yes: { label: 'Passed', icon: '✓' },
-  kinda: { label: 'Kinda', icon: '~' },
-  no: { label: 'Didn’t pass', icon: '•' },
-  skipped: { label: 'No check-in', icon: '–' },
+import { OUTCOME_LABELS, outcomeKey } from '../lib/logStats.js'
+
+// A walk's outcome as a calm color word (mint / amber / grey). No red, no chunky pill.
+function ResultPill({ result }) {
+  const key = outcomeKey(result)
+  return <span className={`outcome-word outcome-${key}`} data-testid="outcome-word">{OUTCOME_LABELS[key]}</span>
 }
 
-function ResultPill({ result }) {
-  const key = result || 'skipped'
-  const info = RESULT_INFO[key]
-  return (
-    <span className={`pill pill-${key}`}>
-      <span aria-hidden="true">{info.icon}</span> {info.label}
-    </span>
-  )
+// The matching ring mark shown on the left of a Log entry.
+export function OutcomeMark({ result }) {
+  return <span className={`outcome-mark outcome-${outcomeKey(result)}`} aria-hidden="true" />
 }
 
 export default ResultPill

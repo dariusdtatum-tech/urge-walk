@@ -1,11 +1,28 @@
 import { useState } from 'react'
 import { useToday } from '../lib/useToday.js'
-import { deleteWalk, formatTimeOfDay, groupByDay, summarize, updateWalk, walkSummaryLabel } from '../lib/logStats.js'
+import {
+  OUTCOME_LABELS, deleteWalk, formatTimeOfDay, groupByDay, summarize, updateWalk, walkSummaryLabel, weekDays,
+} from '../lib/logStats.js'
 import { loadWalks, saveWalks } from '../lib/walkStorage.js'
-import ResultPill from './ResultPill.jsx'
+import ResultPill, { OutcomeMark } from './ResultPill.jsx'
 import WalkDetailSheet from './WalkDetailSheet.jsx'
 
-// Log tab: a summary of all walks, then the history grouped by day.
+const DAY_COLORS = { yes: 'var(--res-yes)', kinda: 'var(--res-kinda)', no: 'var(--res-no)' }
+
+// A day with more than one outcome is split into equal slices (e.g. mint / amber).
+function splitFill(outcomes) {
+  const step = 100 / outcomes.length
+  const stops = outcomes.map((o, i) => `${DAY_COLORS[o]} ${i * step}% ${(i + 1) * step}%`)
+  return `conic-gradient(${stops.join(', ')})`
+}
+
+function dayDescription(d) {
+  if (d.state === 'none') return 'no urge logged'
+  if (d.state === 'skipped') return `${d.count} ${d.count === 1 ? 'walk' : 'walks'}, no check-in`
+  return d.outcomes.map((o) => OUTCOME_LABELS[o].toLowerCase()).join(' and ')
+}
+
+// Log tab: a summary of all walks, this week's day marks, then the history grouped by day.
 function LogTab({ onGoToWalk, initialSelectedId = null }) {
   const today = useToday()
   const [initial] = useState(() => loadWalks())
@@ -46,6 +63,7 @@ function LogTab({ onGoToWalk, initialSelectedId = null }) {
 
   const s = summarize(walks)
   const groups = groupByDay(walks, today)
+  const week = weekDays(walks, today)
 
   return (
     <div className="log">
@@ -59,13 +77,41 @@ function LogTab({ onGoToWalk, initialSelectedId = null }) {
         <p className="summary-sub" data-testid="summary-passed">
           {s.yes} passed · {s.totalMinutes} {s.totalMinutes === 1 ? 'minute' : 'minutes'} walked
         </p>
-        <div className="summary-counts" data-testid="summary-counts">
-          <span className="count count-yes"><b>{s.yes}</b> Yes</span>
-          <span className="count count-kinda"><b>{s.kinda}</b> Kinda</span>
-          <span className="count count-no"><b>{s.no}</b> No</span>
-          {s.skipped > 0 && <span className="count count-skipped"><b>{s.skipped}</b> No check-in</span>}
+        {/* One 4-up row, equal columns, never wraps */}
+        <div className="outcome-row" data-testid="summary-counts">
+          {[
+            ['yes', s.yes, 'Passed'],
+            ['kinda', s.kinda, 'Kinda'],
+            ['no', s.no, 'Didn’t'],
+            ['skipped', s.skipped, 'No check-in'],
+          ].map(([key, n, label]) => (
+            <div key={key} className={`outcome-cell outcome-${key}`} data-testid="outcome-cell"
+              aria-label={`${n} ${OUTCOME_LABELS[key]}`}>
+              <b>{n}</b>
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
         <p className="summary-cheer">Every walk is proof an urge doesn’t get the final say.</p>
+      </section>
+
+      <section className="week-card" aria-label="This week">
+        <h2 className="week-title">This week</h2>
+        <ol className="week-days">
+          {week.map((d) => (
+            <li key={d.key} className={d.isToday ? 'week-day today' : 'week-day'}>
+              <span
+                className={`day-ring day-${d.outcomes.length > 1 ? 'mixed' : d.state}`}
+                data-testid="day-ring"
+                data-state={d.state}
+                style={d.outcomes.length > 1 ? { background: splitFill(d.outcomes) } : undefined}
+                role="img"
+                aria-label={`${d.label}: ${dayDescription(d)}`}
+              />
+              <span className="week-label">{d.label}</span>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {groups.map((g) => (
@@ -74,16 +120,17 @@ function LogTab({ onGoToWalk, initialSelectedId = null }) {
           <ul className="log-list">
             {g.walks.map((w) => (
               <li key={w.id}>
-                <button className="log-entry" data-testid="log-entry" onClick={() => setSelectedId(w.id)}>
-                  <div className="log-entry-top">
-                    <span className="log-time">{formatTimeOfDay(w.startedAt)}</span>
-                    <span className="log-minutes">
-                      {walkSummaryLabel(w)}
-                      {w.endedEarly && <span className="tag">Ended early</span>}
-                    </span>
-                    <ResultPill result={w.result} />
+                <button className="log-entry log-walk" data-testid="log-entry" onClick={() => setSelectedId(w.id)}>
+                  <OutcomeMark result={w.result} />
+                  <div className="log-entry-main">
+                    <div className="log-entry-top">
+                      <span className="log-time">{formatTimeOfDay(w.startedAt)}</span>
+                      <span className="log-minutes">{walkSummaryLabel(w)}</span>
+                      <ResultPill result={w.result} />
+                    </div>
+                    {w.endedEarly && <span className="tag">Ended early</span>}
+                    {w.note && <p className="log-note">{w.note}</p>}
                   </div>
-                  {w.note && <p className="log-note">{w.note}</p>}
                 </button>
               </li>
             ))}

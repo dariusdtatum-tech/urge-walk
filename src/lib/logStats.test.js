@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  dayLabel, deleteWalk, finishedLabel, formatDuration, groupByDay, localDayKey, plannedLabel, summarize,
-  updateWalk, walkSummaryLabel,
+  OUTCOME_LABELS, dayLabel, deleteWalk, finishedLabel, formatDuration, groupByDay, localDayKey, outcomeKey,
+  plannedLabel, summarize, updateWalk, walkSummaryLabel, weekDays,
 } from './logStats.js'
 import { loadWalks, saveWalks } from './walkStorage.js'
 
@@ -123,5 +123,36 @@ describe('display of open / custom / old walks', () => {
     const s = summarize([walk('o', '2026-10-07T12:00:00Z', { plannedMinutes: null, actualSeconds: 23 * 60 }), walk('a', '2026-10-07T13:00:00Z')])
     expect(s.total).toBe(2)
     expect(s.totalMinutes).toBe(33)
+  })
+})
+
+describe('outcomes and This week marks', () => {
+  const w = (iso, result) => ({ id: iso, startedAt: iso, endedAt: iso, plannedMinutes: 10, actualSeconds: 600, result })
+  it('maps results to outcome keys and labels (no red, "Didn\'t pass" is just an outcome)', () => {
+    expect(outcomeKey('yes')).toBe('yes')
+    expect(outcomeKey(null)).toBe('skipped')
+    expect(outcomeKey('weird')).toBe('skipped')
+    expect(OUTCOME_LABELS.no).toBe('Didn’t pass')
+  })
+  it('7 days ending today, labelled Fr..Th, coloured by outcome', () => {
+    const days = weekDays([
+      w('2026-10-08T03:50:00.000Z', 'no'),    // Wed 11:50 PM
+      w('2026-10-08T13:05:00.000Z', 'kinda'), // Thu 9:05 AM
+      w('2026-10-08T23:15:00.000Z', 'yes'),   // Thu 7:15 PM
+      w('2026-10-05T16:00:00.000Z', null),    // Mon, no check-in
+      w('2026-09-20T16:00:00.000Z', 'yes'),   // older: not this week
+    ], '2026-10-08')
+    expect(days.map((d) => d.label)).toEqual(['Fr', 'Sa', 'Su', 'Mo', 'Tu', 'We', 'Th'])
+    expect(days.map((d) => d.state)).toEqual(['none', 'none', 'none', 'skipped', 'none', 'no', 'yes+kinda'])
+    expect(days[6].isToday).toBe(true)
+    expect(days[6].outcomes).toEqual(['yes', 'kinda'])
+  })
+  it('a day mark keeps a fixed order no matter the walk order', () => {
+    const days = weekDays([w('2026-10-08T13:00:00.000Z', 'no'), w('2026-10-08T14:00:00.000Z', 'yes')], '2026-10-08')
+    expect(days[6].state).toBe('yes+no')
+  })
+  it('uses local days across the DST change', () => {
+    const days = weekDays([w('2026-11-01T05:30:00.000Z', 'yes')], '2026-11-03') // Nov 1, 12:30 AM EST
+    expect(days.find((d) => d.key === '2026-11-01').state).toBe('yes')
   })
 })

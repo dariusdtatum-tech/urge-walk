@@ -80,7 +80,7 @@ function BackupScreen({ onBack }) {
     <div className="backup">
       <div className="backup-top">
         <button className="btn btn-ghost back-btn" onClick={onBack}>‹ Home</button>
-        <h2>Backup</h2>
+        <h1 className="page-title">Backup</h1>
       </div>
 
       <p className="privacy-note">
