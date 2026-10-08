@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  buildWalkRecord, elapsedMs, finishWalk, formatClock, isTimeUp, messageIndex,
-  pauseWalk, progress, remainingMs, resumeWalk, startWalk,
+  CUSTOM_MAX, CUSTOM_MIN, buildWalkRecord, clampCustomMinutes, elapsedMs, finishWalk, formatClock, formatElapsed,
+  isOpen, isTimeUp, messageIndex, pauseWalk, progress, remainingMs, resumeWalk, startWalk,
 } from './walkTimer.js'
 
 const MIN = 60 * 1000
@@ -78,6 +78,7 @@ describe('finishing', () => {
       id: 'w1',
       startedAt: '2026-01-01T12:00:00.000Z',
       endedAt: '2026-01-01T12:10:00.000Z',
+      mode: 'timed',
       plannedMinutes: 10,
       actualSeconds: 600,
       endedEarly: false,
@@ -125,6 +126,15 @@ describe('display helpers', () => {
     expect(formatClock(59_001)).toBe('1:00')
     expect(formatClock(1)).toBe('0:01')
     expect(formatClock(0)).toBe('0:00')
+    expect(formatClock(120 * MIN)).toBe('2:00:00')
+    expect(formatClock(61 * MIN)).toBe('1:01:00')
+  })
+
+  it('formatElapsed rounds down (count-up)', () => {
+    expect(formatElapsed(0)).toBe('0:00')
+    expect(formatElapsed(59_999)).toBe('0:59')
+    expect(formatElapsed(23 * MIN + 5000)).toBe('23:05')
+    expect(formatElapsed(75 * MIN)).toBe('1:15:00')
   })
 
   it('message changes every 2 minutes and wraps around', () => {
@@ -133,5 +143,85 @@ describe('display helpers', () => {
     expect(messageIndex(w, T0 + 119 * 1000, 11)).toBe(9)
     expect(messageIndex(w, T0 + 2 * MIN, 11)).toBe(10)
     expect(messageIndex(w, T0 + 4 * MIN, 11)).toBe(0)
+  })
+})
+
+describe('open walk (counts up)', () => {
+  const open = () => startWalk(null, T0, { id: 'o1', messageOffset: 0 })
+
+  it('counts up from 0 with no end', () => {
+    const w = open()
+    expect(isOpen(w)).toBe(true)
+    expect(elapsedMs(w, T0)).toBe(0)
+    expect(formatElapsed(elapsedMs(w, T0 + 23 * MIN))).toBe('23:00')
+    expect(elapsedMs(w, T0 + 300 * MIN)).toBe(300 * MIN) // no cap
+    expect(isTimeUp(w, T0 + 1000 * MIN)).toBe(false)
+    expect(progress(w, T0 + 10 * MIN)).toBe(0)
+  })
+
+  it('pause / resume', () => {
+    let w = pauseWalk(open(), T0 + 5 * MIN)
+    expect(elapsedMs(w, T0 + 20 * MIN)).toBe(5 * MIN)
+    w = resumeWalk(w, T0 + 8 * MIN)
+    expect(elapsedMs(w, T0 + 10 * MIN)).toBe(7 * MIN)
+  })
+
+  it('resumes after reload (saved as JSON)', () => {
+    const w = JSON.parse(JSON.stringify(pauseWalk(open(), T0 + 4 * MIN)))
+    expect(elapsedMs(w, T0 + 60 * MIN)).toBe(4 * MIN)
+    const resumed = JSON.parse(JSON.stringify(resumeWalk(w, T0 + 60 * MIN)))
+    expect(elapsedMs(resumed, T0 + 70 * MIN)).toBe(14 * MIN)
+  })
+
+  it('messages still rotate every 2 minutes', () => {
+    expect(messageIndex(open(), T0 + 6 * MIN, 11)).toBe(3)
+  })
+
+  it('Finish walk ends now, never "ended early", record has plannedMinutes null', () => {
+    const w = finishWalk(resumeWalk(pauseWalk(open(), T0 + 10 * MIN), T0 + 12 * MIN), T0 + 25 * MIN, { early: true })
+    expect(w.endedAt).toBe(T0 + 25 * MIN)
+    expect(w.endedEarly).toBe(false)
+    expect(buildWalkRecord(w, { result: 'yes', note: 'x' })).toEqual({
+      id: 'o1',
+      startedAt: '2026-01-01T12:00:00.000Z',
+      endedAt: '2026-01-01T12:25:00.000Z',
+      mode: 'open',
+      plannedMinutes: null,
+      actualSeconds: 23 * 60,
+      endedEarly: false,
+      result: 'yes',
+      note: 'x',
+    })
+  })
+
+  it('finishing while paused does not count the pause', () => {
+    const w = finishWalk(pauseWalk(open(), T0 + 3 * MIN), T0 + 30 * MIN)
+    expect(buildWalkRecord(w).actualSeconds).toBe(180)
+  })
+})
+
+describe('custom length', () => {
+  it('is clamped to whole minutes between 1 and 120', () => {
+    expect(CUSTOM_MIN).toBe(1)
+    expect(CUSTOM_MAX).toBe(120)
+    expect(clampCustomMinutes(20)).toBe(20)
+    expect(clampCustomMinutes(0)).toBe(1)
+    expect(clampCustomMinutes(-5)).toBe(1)
+    expect(clampCustomMinutes(500)).toBe(120)
+    expect(clampCustomMinutes('45')).toBe(45)
+    expect(clampCustomMinutes(7.6)).toBe(8)
+    expect(clampCustomMinutes('abc')).toBe(20)
+  })
+
+  it('a 20-minute custom walk counts down and records 20 planned minutes', () => {
+    const w = startWalk(20, T0, { id: 'c1' })
+    expect(formatClock(remainingMs(w, T0 + 5 * MIN))).toBe('15:00')
+    const done = finishWalk(w, T0 + 21 * MIN)
+    expect(done.endedAt).toBe(T0 + 20 * MIN)
+    expect(buildWalkRecord(done)).toMatchObject({ mode: 'timed', plannedMinutes: 20, actualSeconds: 1200, endedEarly: false })
+  })
+
+  it('a 120-minute walk shows hours', () => {
+    expect(formatClock(remainingMs(startWalk(120, T0, { id: 'c2' }), T0))).toBe('2:00:00')
   })
 })

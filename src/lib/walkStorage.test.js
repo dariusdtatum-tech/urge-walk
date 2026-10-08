@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ACTIVE_WALK_KEY, WALKS_KEY, WALK_PREFS_KEY, appendWalk, loadActiveWalk, loadWalkMinutes,
-  loadWalks, saveActiveWalk, saveWalkMinutes,
+  ACTIVE_WALK_KEY, WALKS_KEY, WALK_PREFS_KEY, appendWalk, loadActiveWalk, loadWalkPrefs,
+  loadWalks, plannedMinutesFor, saveActiveWalk, saveWalkPrefs,
 } from './walkStorage.js'
 import { pauseWalk, startWalk } from './walkTimer.js'
 
@@ -84,12 +84,50 @@ describe('walk in progress', () => {
 })
 
 describe('preferences', () => {
-  it('defaults to 10 and remembers the last choice', () => {
+  it('defaults to 10 minutes and a custom length of 20', () => {
+    expect(loadWalkPrefs(memoryStorage())).toEqual({ choice: 10, customMinutes: 20 })
+  })
+
+  it('remembers the last choice and last custom value', () => {
     const s = memoryStorage()
-    expect(loadWalkMinutes(s)).toBe(10)
-    saveWalkMinutes(5, s)
-    expect(loadWalkMinutes(s)).toBe(5)
-    s.data[WALK_PREFS_KEY] = JSON.stringify({ minutes: 7 })
-    expect(loadWalkMinutes(s)).toBe(10)
+    saveWalkPrefs({ choice: 'custom', customMinutes: 45 }, s)
+    expect(loadWalkPrefs(s)).toEqual({ choice: 'custom', customMinutes: 45 })
+    saveWalkPrefs({ choice: 'open', customMinutes: 45 }, s)
+    expect(loadWalkPrefs(s)).toEqual({ choice: 'open', customMinutes: 45 })
+  })
+
+  it('reads the older { minutes } format and rejects bad values', () => {
+    expect(loadWalkPrefs(memoryStorage({ [WALK_PREFS_KEY]: JSON.stringify({ minutes: 5 }) }))).toEqual({ choice: 5, customMinutes: 20 })
+    expect(loadWalkPrefs(memoryStorage({ [WALK_PREFS_KEY]: JSON.stringify({ choice: 7, customMinutes: 999 }) }))).toEqual({ choice: 10, customMinutes: 120 })
+  })
+
+  it('plannedMinutesFor', () => {
+    expect(plannedMinutesFor({ choice: 15, customMinutes: 30 })).toBe(15)
+    expect(plannedMinutesFor({ choice: 'custom', customMinutes: 30 })).toBe(30)
+    expect(plannedMinutesFor({ choice: 'open', customMinutes: 30 })).toBeNull()
+  })
+})
+
+describe('open walks and older records', () => {
+  it('keeps open walks (plannedMinutes null) and fills in mode for old records', () => {
+    const s = memoryStorage({
+      [WALKS_KEY]: JSON.stringify({ version: 1, walks: [
+        record({ id: 'old' }), // saved before `mode` existed
+        record({ id: 'open', mode: 'open', plannedMinutes: null, endedEarly: true }),
+        record({ id: 'custom', mode: 'timed', plannedMinutes: 37 }),
+        record({ id: 'bad', plannedMinutes: -3 }),
+      ] }),
+    })
+    const { walks } = loadWalks(s)
+    expect(walks.map((w) => [w.id, w.mode, w.plannedMinutes, w.endedEarly])).toEqual([
+      ['old', 'timed', 10, false], ['open', 'open', null, false], ['custom', 'timed', 37, false],
+    ])
+  })
+
+  it('an open walk in progress survives a reload', () => {
+    const s = memoryStorage()
+    const w = startWalk(null, 1000, { id: 'o', messageOffset: 0 })
+    saveActiveWalk(w, s)
+    expect(loadActiveWalk(s)).toEqual({ version: 1, ...w })
   })
 })

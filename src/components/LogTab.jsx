@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useToday } from '../lib/useToday.js'
-import { deleteWalk, formatDuration, formatTimeOfDay, groupByDay, summarize, updateWalk } from '../lib/logStats.js'
+import { deleteWalk, formatTimeOfDay, groupByDay, summarize, updateWalk, walkSummaryLabel } from '../lib/logStats.js'
 import { loadWalks, saveWalks } from '../lib/walkStorage.js'
 import ResultPill from './ResultPill.jsx'
 import WalkDetailSheet from './WalkDetailSheet.jsx'
@@ -78,7 +78,7 @@ function LogTab({ onGoToWalk, initialSelectedId = null }) {
                   <div className="log-entry-top">
                     <span className="log-time">{formatTimeOfDay(w.startedAt)}</span>
                     <span className="log-minutes">
-                      {formatDuration(w.actualSeconds)} walk
+                      {walkSummaryLabel(w)}
                       {w.endedEarly && <span className="tag">Ended early</span>}
                     </span>
                     <ResultPill result={w.result} />

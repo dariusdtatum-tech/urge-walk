@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  dayLabel, deleteWalk, formatDuration, groupByDay, localDayKey, summarize, updateWalk,
+  dayLabel, deleteWalk, finishedLabel, formatDuration, groupByDay, localDayKey, plannedLabel, summarize,
+  updateWalk, walkSummaryLabel,
 } from './logStats.js'
 import { loadWalks, saveWalks } from './walkStorage.js'
 
@@ -91,7 +92,7 @@ describe('editing and deleting', () => {
     const data = {}
     const s = { getItem: (k) => data[k] ?? null, setItem: (k, v) => { data[k] = v } }
     saveWalks(updateWalk(deleteWalk(list, 'a'), 'b', { result: 'no', note: 'hard one' }), s)
-    expect(loadWalks(s).walks).toEqual([{ ...list[1], result: 'no', note: 'hard one' }])
+    expect(loadWalks(s).walks).toEqual([{ ...list[1], mode: 'timed', result: 'no', note: 'hard one' }])
   })
 })
 
@@ -101,5 +102,26 @@ describe('formatDuration', () => {
     expect(formatDuration(200)).toBe('3 min 20 sec')
     expect(formatDuration(45)).toBe('45 sec')
     expect(formatDuration(0)).toBe('0 sec')
+  })
+})
+
+describe('display of open / custom / old walks', () => {
+  it('labels', () => {
+    const open = walk('o', '2026-10-07T12:00:00Z', { mode: 'open', plannedMinutes: null, actualSeconds: 23 * 60 })
+    const custom = walk('c', '2026-10-07T12:00:00Z', { plannedMinutes: 20, actualSeconds: 1200 })
+    const old = walk('x', '2026-10-07T12:00:00Z', { endedEarly: true, actualSeconds: 200 }) // no mode field
+    expect(walkSummaryLabel(open)).toBe('Open walk · 23 min')
+    expect(plannedLabel(open)).toBe('No set time')
+    expect(finishedLabel(open)).toBe('Open walk')
+    expect(walkSummaryLabel(custom)).toBe('20 min walk')
+    expect(plannedLabel(custom)).toBe('20 min')
+    expect(walkSummaryLabel(old)).toBe('3 min 20 sec walk')
+    expect(finishedLabel(old)).toBe('Ended early')
+  })
+
+  it('summary counts open walk minutes', () => {
+    const s = summarize([walk('o', '2026-10-07T12:00:00Z', { plannedMinutes: null, actualSeconds: 23 * 60 }), walk('a', '2026-10-07T13:00:00Z')])
+    expect(s.total).toBe(2)
+    expect(s.totalMinutes).toBe(33)
   })
 })

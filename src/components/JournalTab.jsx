@@ -4,7 +4,7 @@ import {
   newDraft, saveDraft, saveJournal,
 } from '../lib/journal.js'
 import { MOODS } from '../lib/journalContent.js'
-import { formatTimeOfDay, groupByDay } from '../lib/logStats.js'
+import { formatTimeOfDay, groupByDay, walkSummaryLabel } from '../lib/logStats.js'
 import { useToday } from '../lib/useToday.js'
 import { loadWalks } from '../lib/walkStorage.js'
 import JournalEditor from './JournalEditor.jsx'
@@ -152,6 +152,7 @@ function JournalTab({ onOpenWalk }) {
                       <ResultPill result={item.walk.result} />
                     </div>
                     <p className="log-note">{item.walk.note}</p>
+                    <p className="journal-walk-meta">{walkSummaryLabel(item.walk)}</p>
                   </button>
                 )}
               </li>

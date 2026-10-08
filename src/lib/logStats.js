@@ -76,3 +76,20 @@ export function updateWalk(walks, id, changes) {
 export function deleteWalk(walks, id) {
   return walks.filter((w) => w.id !== id)
 }
+
+// Short description for lists: "Open walk · 23 min" or "10 min walk".
+export function walkSummaryLabel(w) {
+  if (w.plannedMinutes == null) return `Open walk · ${formatDuration(w.actualSeconds)}`
+  return `${formatDuration(w.actualSeconds)} walk`
+}
+
+// "Planned" field in the details sheet.
+export function plannedLabel(w) {
+  return w.plannedMinutes == null ? 'No set time' : `${w.plannedMinutes} min`
+}
+
+// "Finished" field in the details sheet.
+export function finishedLabel(w) {
+  if (w.plannedMinutes == null) return 'Open walk'
+  return w.endedEarly ? 'Ended early' : 'Full walk'
+}

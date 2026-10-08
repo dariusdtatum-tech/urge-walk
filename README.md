@@ -6,7 +6,7 @@ A simple installable web app (PWA) that helps you ride out an urge by taking a s
 
 **Status:**
 - **Home** — clean-time tracker (add habits with a start date, see days clean, edit/reset/delete) and a shortcut to the urge walk.
-- **Walk** — "I have an urge" button and a 5 / 10 / 15-minute walk timer with pause, end early, and a short check-in afterwards. The timer is based on saved timestamps, so it stays correct if the screen locks or the app is closed.
+- **Walk** — "I have an urge" button; choose 5 / 10 / 15 minutes, a custom length (1–120 min), or an open walk that counts up with no set time. Pause, end early / finish, and a short check-in afterwards. The timer is based on saved timestamps, so it stays correct if the screen locks or the app is closed.
 - **Log** — summary (urges walked off, Yes / Kinda / No, minutes walked) and history grouped by day; tap a walk to edit its result/note or delete it.
 - **Journal** — private entries (optional title, mood, writing prompts) with drafts autosaved as you type, search, and your walk notes shown alongside (read from the walk log, not copied).
 
@@ -29,11 +29,11 @@ npm run preview    # serve the production build (http://localhost:4173/urge-walk
 | Key | What |
 | --- | --- |
 | `urgewalk.v1.habits` | `{ version: 1, habits: [{ id, name, startDate: 'YYYY-MM-DD' }] }` |
-| `urgewalk.v1.walks` | `{ version: 1, walks: [{ id, startedAt, endedAt, plannedMinutes, actualSeconds, endedEarly, result: 'yes' \| 'kinda' \| 'no' \| null, note }] }` |
+| `urgewalk.v1.walks` | `{ version: 1, walks: [{ id, startedAt, endedAt, mode: 'timed' \| 'open', plannedMinutes (null for open walks), actualSeconds, endedEarly, result: 'yes' \| 'kinda' \| 'no' \| null, note }] }` — records without `mode` are treated as timed |
 | `urgewalk.v1.activeWalk` | the walk in progress (removed when it's saved) |
 | `urgewalk.v1.journal` | `{ version: 1, entries: [{ id, createdAt, updatedAt, title, body, mood }] }` |
 | `urgewalk.v1.journalDraft` | the entry being written (removed on Done/Discard) |
-| `urgewalk.v1.walkPrefs` | `{ version: 1, minutes }` — last chosen walk length |
+| `urgewalk.v1.walkPrefs` | `{ version: 1, choice: 5 \| 10 \| 15 \| 'custom' \| 'open', customMinutes }` — last choice and custom length |
 
 Damaged data is copied to `<key>.corrupt-<timestamp>` instead of being deleted.
 

@@ -4,7 +4,7 @@ import { makeId } from '../lib/storage.js'
 import { useWakeLock } from '../lib/useWakeLock.js'
 import { SAVED_MESSAGES, WALK_MESSAGES } from '../lib/walkMessages.js'
 import {
-  appendWalk, loadActiveWalk, loadWalkMinutes, saveActiveWalk, saveWalkMinutes,
+  appendWalk, loadActiveWalk, loadWalkPrefs, plannedMinutesFor, saveActiveWalk, saveWalkPrefs,
 } from '../lib/walkStorage.js'
 import {
   buildWalkRecord, finishWalk, isEnded, isPaused, isTimeUp, pauseWalk, resumeWalk, startWalk,
@@ -18,7 +18,7 @@ import WalkStart from './WalkStart.jsx'
 // or locking the screen never loses it; the time is worked out from timestamps.
 function WalkTab({ onSaved }) {
   const [walk, setWalk] = useState(() => loadActiveWalk())
-  const [minutes, setMinutes] = useState(() => loadWalkMinutes())
+  const [prefs, setPrefs] = useState(() => loadWalkPrefs()) // { choice, customMinutes }
   const [now, setNow] = useState(() => Date.now())
 
   const walking = walk != null && !isEnded(walk) && !isPaused(walk)
@@ -55,16 +55,16 @@ function WalkTab({ onSaved }) {
     }
   }, [walk, now])
 
-  function handleChangeMinutes(m) {
-    setMinutes(m)
-    saveWalkMinutes(m)
+  function handleChangePrefs(next) {
+    setPrefs(next)
+    saveWalkPrefs(next)
   }
 
   function handleStart() {
     unlockAudio() // must happen during the tap for iOS to allow the chime later
     const t = Date.now()
     setNow(t)
-    commit(startWalk(minutes, t, {
+    commit(startWalk(plannedMinutesFor(prefs), t, {
       id: makeId(),
       messageOffset: Math.floor(Math.random() * WALK_MESSAGES.length),
     }))
@@ -77,7 +77,7 @@ function WalkTab({ onSaved }) {
   }
 
   if (!walk) {
-    return <WalkStart minutes={minutes} onChangeMinutes={handleChangeMinutes} onStart={handleStart} />
+    return <WalkStart prefs={prefs} onChangePrefs={handleChangePrefs} onStart={handleStart} />
   }
   if (isEnded(walk)) {
     return <WalkFinish walk={walk} onSave={handleSave} onSkip={() => handleSave({}, true)} />
@@ -89,6 +89,7 @@ function WalkTab({ onSaved }) {
       onPause={() => commit(pauseWalk(walk, Date.now()))}
       onResume={() => { unlockAudio(); const t = Date.now(); setNow(t); commit(resumeWalk(walk, t)) }}
       onEndEarly={() => commit(finishWalk(walk, Date.now(), { early: true }))}
+      onFinish={() => { commit(finishWalk(walk, Date.now())); playChime() }}
     />
   )
 }

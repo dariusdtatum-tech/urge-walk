@@ -1,9 +1,9 @@
 // Walk data on this device:
 // - urgewalk.v1.walks       finished walks (read by the Log tab)
 // - urgewalk.v1.activeWalk  the walk in progress, so reopening the app resumes it
-// - urgewalk.v1.walkPrefs   last chosen length (5 / 10 / 15 minutes)
+// - urgewalk.v1.walkPrefs   last choice (5 / 10 / 15 / custom / open) and last custom length
 import { makeId, readList, readObject, writeList, writeObject } from './storage.js'
-import { DEFAULT_MINUTES, WALK_OPTIONS } from './walkTimer.js'
+import { DEFAULT_CUSTOM_MINUTES, DEFAULT_MINUTES, WALK_OPTIONS, clampCustomMinutes } from './walkTimer.js'
 
 export const WALKS_KEY = 'urgewalk.v1.walks'
 export const ACTIVE_WALK_KEY = 'urgewalk.v1.activeWalk'
@@ -21,18 +21,24 @@ export function sanitizeWalks(list) {
   return list
     .filter((w) => w && typeof w === 'object')
     .filter((w) => isTime(w.startedAt) && isTime(w.endedAt))
-    .filter((w) => isNum(w.plannedMinutes) && w.plannedMinutes > 0)
+    // Timed walks have a positive plannedMinutes; open walks have null (or mode 'open').
+    .filter((w) => (isNum(w.plannedMinutes) && w.plannedMinutes > 0) || w.plannedMinutes == null)
     .filter((w) => isNum(w.actualSeconds) && w.actualSeconds >= 0)
-    .map((w) => ({
-      id: typeof w.id === 'string' && w.id ? w.id : makeId(),
-      startedAt: w.startedAt,
-      endedAt: w.endedAt,
-      plannedMinutes: w.plannedMinutes,
-      actualSeconds: Math.round(w.actualSeconds),
-      endedEarly: Boolean(w.endedEarly),
-      result: RESULTS.includes(w.result) ? w.result : null,
-      note: typeof w.note === 'string' ? w.note.slice(0, MAX_NOTE_LENGTH) : '',
-    }))
+    .map((w) => {
+      // Older records have no `mode`; they were all timed walks.
+      const open = w.mode === 'open' || w.plannedMinutes == null
+      return {
+        id: typeof w.id === 'string' && w.id ? w.id : makeId(),
+        startedAt: w.startedAt,
+        endedAt: w.endedAt,
+        mode: open ? 'open' : 'timed',
+        plannedMinutes: open ? null : w.plannedMinutes,
+        actualSeconds: Math.round(w.actualSeconds),
+        endedEarly: open ? false : Boolean(w.endedEarly),
+        result: RESULTS.includes(w.result) ? w.result : null,
+        note: typeof w.note === 'string' ? w.note.slice(0, MAX_NOTE_LENGTH) : '',
+      }
+    })
 }
 
 // Returns { walks, recovered }. Oldest first.
@@ -58,7 +64,7 @@ function validActiveWalk(w) {
   return (
     w && typeof w === 'object' &&
     typeof w.id === 'string' &&
-    isNum(w.plannedMinutes) && w.plannedMinutes > 0 &&
+    (w.plannedMinutes === null || (isNum(w.plannedMinutes) && w.plannedMinutes > 0)) &&
     isNum(w.startedAt) &&
     (w.pausedAt === null || isNum(w.pausedAt)) &&
     isNum(w.pausedMs) && w.pausedMs >= 0 &&
@@ -81,12 +87,26 @@ export function saveActiveWalk(walk, storage = globalThis.localStorage) {
 }
 
 // ---------- Preferences ----------
+// choice: 5 | 10 | 15 | 'custom' | 'open'; customMinutes: last custom length (1-120)
 
-export function loadWalkMinutes(storage = globalThis.localStorage) {
-  const prefs = readObject(WALK_PREFS_KEY, storage)
-  return prefs && WALK_OPTIONS.includes(prefs.minutes) ? prefs.minutes : DEFAULT_MINUTES
+export const WALK_CHOICES = [...WALK_OPTIONS, 'custom', 'open']
+
+export function loadWalkPrefs(storage = globalThis.localStorage) {
+  const prefs = readObject(WALK_PREFS_KEY, storage) || {}
+  // Older versions only saved { minutes }.
+  let choice = WALK_CHOICES.includes(prefs.choice) ? prefs.choice : null
+  if (choice == null) choice = WALK_OPTIONS.includes(prefs.minutes) ? prefs.minutes : DEFAULT_MINUTES
+  const customMinutes = prefs.customMinutes == null ? DEFAULT_CUSTOM_MINUTES : clampCustomMinutes(prefs.customMinutes)
+  return { choice, customMinutes }
 }
 
-export function saveWalkMinutes(minutes, storage = globalThis.localStorage) {
-  return writeObject(WALK_PREFS_KEY, { version: 1, minutes }, storage)
+export function saveWalkPrefs({ choice, customMinutes }, storage = globalThis.localStorage) {
+  return writeObject(WALK_PREFS_KEY, { version: 1, choice, customMinutes: clampCustomMinutes(customMinutes) }, storage)
+}
+
+// What to pass to startWalk(): minutes for a timed walk, or null for an open walk.
+export function plannedMinutesFor({ choice, customMinutes }) {
+  if (choice === 'open') return null
+  if (choice === 'custom') return clampCustomMinutes(customMinutes)
+  return choice
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatDuration, formatTimeOfDay, localDayKey, dayLabel } from '../lib/logStats.js'
+import { dayLabel, finishedLabel, formatDuration, formatTimeOfDay, localDayKey, plannedLabel } from '../lib/logStats.js'
 import { todayISO } from '../lib/cleanTime.js'
 import { MAX_NOTE_LENGTH } from '../lib/walkStorage.js'
 import ConfirmDialog from './ConfirmDialog.jsx'
@@ -31,8 +31,8 @@ function WalkDetailSheet({ walk, onSave, onDelete, onClose }) {
 
         <dl className="detail-grid">
           <div><dt>Walked</dt><dd>{formatDuration(walk.actualSeconds)}</dd></div>
-          <div><dt>Planned</dt><dd>{walk.plannedMinutes} min</dd></div>
-          <div><dt>Finished</dt><dd>{walk.endedEarly ? 'Ended early' : 'Full walk'}</dd></div>
+          <div><dt>Planned</dt><dd>{plannedLabel(walk)}</dd></div>
+          <div><dt>Finished</dt><dd>{finishedLabel(walk)}</dd></div>
         </dl>
 
         <fieldset className="finish-question">

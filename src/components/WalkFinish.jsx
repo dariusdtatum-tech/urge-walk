@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MAX_NOTE_LENGTH } from '../lib/walkStorage.js'
-import { elapsedMs, formatClock } from '../lib/walkTimer.js'
+import { elapsedMs, formatElapsed, isOpen } from '../lib/walkTimer.js'
 
 const CHOICES = [
   { id: 'yes', label: 'Yes' },
@@ -12,12 +12,15 @@ const CHOICES = [
 function WalkFinish({ walk, onSave, onSkip }) {
   const [result, setResult] = useState(null)
   const [note, setNote] = useState('')
-  const walked = formatClock(elapsedMs(walk, walk.endedAt))
+  const walked = formatElapsed(elapsedMs(walk, walk.endedAt))
+  let heading = 'You did it.'
+  if (isOpen(walk)) heading = 'Nice walk.'
+  else if (walk.endedEarly) heading = 'You took a break from the urge.'
 
   return (
     <section className="walk-finish">
       <div className="finish-icon" aria-hidden="true">🌿</div>
-      <h2>{walk.endedEarly ? 'You took a break from the urge.' : 'You did it.'}</h2>
+      <h2>{heading}</h2>
       <p className="finish-sub">You walked for {walked}.</p>
 
       <fieldset className="finish-question">
