@@ -4,7 +4,7 @@ A simple installable web app (PWA) that helps you ride out an urge by taking a s
 
 **Privacy:** everything stays on your device (browser storage only). No accounts, no server, no tracking.
 
-**Status:** skeleton only — one screen with placeholder tabs (Home, Walk, Log, Journal).
+**Status:** Home tab has a clean-time tracker (add habits with a start date, see days clean, edit/reset/delete). Walk, Log and Journal are placeholders.
 
 ## Run locally
 
@@ -13,6 +13,7 @@ Requires [Node.js](https://nodejs.org/) 20+.
 ```bash
 npm install        # first time only
 npm run dev        # dev server with hot reload (http://localhost:5173/urge-walk/)
+npm test           # unit tests (Vitest)
 npm run build      # production build into dist/
 npm run preview    # serve the production build (http://localhost:4173/urge-walk/)
 ```
