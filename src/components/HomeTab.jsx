@@ -1,11 +1,13 @@
 import { useState } from 'react'
+import { isIOS } from '../lib/persist.js'
+import { loadActiveWalk } from '../lib/walkStorage.js'
 import { loadHabits, makeId, saveHabits } from '../lib/storage.js'
 import { useToday } from '../lib/useToday.js'
 import HabitCard from './HabitCard.jsx'
 import HabitSheet from './HabitSheet.jsx'
 
 // Home tab: the clean-time tracker.
-function HomeTab() {
+function HomeTab({ onUrge }) {
   const today = useToday()
   // Load saved habits once, when the tab first appears.
   const [initial] = useState(() => loadHabits())
@@ -15,6 +17,7 @@ function HomeTab() {
   )
   // null = closed, { mode: 'add' } or { mode: 'edit', habit }
   const [sheet, setSheet] = useState(null)
+  const walkInProgress = loadActiveWalk() != null
 
   function update(next) {
     setHabits(next)
@@ -52,6 +55,11 @@ function HomeTab() {
           <button className="btn btn-primary btn-big" onClick={() => setSheet({ mode: 'add' })}>
             Add your sober date
           </button>
+          {isIOS() && (
+            <p className="empty-note">
+              On iPhone, the Home Screen app and Safari keep separate data. Add your date in the one you’ll use.
+            </p>
+          )}
         </section>
       ) : (
         <>
@@ -63,6 +71,11 @@ function HomeTab() {
           </button>
         </>
       )}
+
+      <button className="urge-shortcut" onClick={onUrge}>
+        <span aria-hidden="true">🚶</span>
+        {walkInProgress ? 'Back to your walk' : 'I have an urge'}
+      </button>
 
       {sheet && (
         <HabitSheet

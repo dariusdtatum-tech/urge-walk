@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import HomeTab from './components/HomeTab.jsx'
+import WalkTab from './components/WalkTab.jsx'
 
-// The four tabs in the bottom bar. Home is real; the others are placeholders for now.
+// The four tabs in the bottom bar. Home and Walk are real; the others are placeholders for now.
 const TABS = [
   { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'walk', label: 'Walk', icon: '🚶', blurb: 'The urge button and 5 / 10 / 15-minute walk timer will live here.' },
+  { id: 'walk', label: 'Walk', icon: '🚶' },
   { id: 'log', label: 'Log', icon: '📋', blurb: 'Your urge log will live here.' },
   { id: 'journal', label: 'Journal', icon: '📓', blurb: 'Your private journal will live here.' },
 ]
@@ -24,7 +25,25 @@ function Placeholder({ tab }) {
 function App() {
   // Which tab is showing right now
   const [activeTab, setActiveTab] = useState('home')
+  // A short message shown at the top after saving a walk
+  const [toast, setToast] = useState('')
   const tab = TABS.find((t) => t.id === activeTab)
+
+  useEffect(() => {
+    if (!toast) return undefined
+    const timer = setTimeout(() => setToast(''), 5000)
+    return () => clearTimeout(timer)
+  }, [toast])
+
+  function handleWalkSaved(message) {
+    setToast(message)
+    setActiveTab('home')
+  }
+
+  let view
+  if (activeTab === 'home') view = <HomeTab onUrge={() => setActiveTab('walk')} />
+  else if (activeTab === 'walk') view = <WalkTab onSaved={handleWalkSaved} />
+  else view = <Placeholder tab={tab} />
 
   return (
     <div className="app">
@@ -34,7 +53,12 @@ function App() {
       </header>
 
       <main className="content">
-        {activeTab === 'home' ? <HomeTab /> : <Placeholder tab={tab} />}
+        {toast && (
+          <div className="toast" data-testid="toast" role="status" onClick={() => setToast('')}>
+            {toast}
+          </div>
+        )}
+        {view}
       </main>
 
       <nav className="tabbar" aria-label="Main">

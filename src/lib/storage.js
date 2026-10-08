@@ -1,4 +1,5 @@
-// Saves habits in this device's localStorage. Nothing ever leaves the phone.
+// Saves data in this device's localStorage. Nothing ever leaves the phone.
+// Each list is stored as { version: 1, <field>: [...] } under a versioned key.
 import { isValidISODate } from './cleanTime.js'
 
 export const HABITS_KEY = 'urgewalk.v1.habits'
@@ -9,6 +10,76 @@ export function makeId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
+
+// Copy unreadable data to a backup key instead of throwing it away.
+function backupCorrupt(key, raw, storage) {
+  try {
+    storage.setItem(`${key}.corrupt-${Date.now()}`, raw)
+  } catch {
+    // ignore: backup is best-effort
+  }
+}
+
+// Generic reader. Returns { items, recovered } where `recovered` is true if
+// saved data was damaged (unreadable, or some entries had to be dropped).
+export function readList(key, field, sanitize, storage = globalThis.localStorage) {
+  let raw
+  try {
+    raw = storage.getItem(key)
+  } catch {
+    return { items: [], recovered: false } // storage blocked (e.g. strict privacy mode)
+  }
+  if (raw == null) return { items: [], recovered: false }
+
+  try {
+    const data = JSON.parse(raw)
+    const list = Array.isArray(data) ? data : data && data[field]
+    if (!Array.isArray(list)) throw new Error('unexpected shape')
+    const items = sanitize(list)
+    return { items, recovered: items.length !== list.length }
+  } catch {
+    backupCorrupt(key, raw, storage)
+    return { items: [], recovered: true }
+  }
+}
+
+export function writeList(key, field, items, storage = globalThis.localStorage) {
+  try {
+    storage.setItem(key, JSON.stringify({ version: 1, [field]: items }))
+    return true
+  } catch {
+    return false
+  }
+}
+
+// Read a single JSON object (or null). Broken data is backed up and treated as missing.
+export function readObject(key, storage = globalThis.localStorage) {
+  let raw
+  try {
+    raw = storage.getItem(key)
+  } catch {
+    return null
+  }
+  if (raw == null) return null
+  try {
+    return JSON.parse(raw)
+  } catch {
+    backupCorrupt(key, raw, storage)
+    return null
+  }
+}
+
+export function writeObject(key, value, storage = globalThis.localStorage) {
+  try {
+    if (value == null) storage.removeItem(key)
+    else storage.setItem(key, JSON.stringify(value))
+    return true
+  } catch {
+    return false
+  }
+}
+
+// ---------- Habits (clean-time tracker) ----------
 
 // Keep only well-formed habits; quietly drop anything broken.
 export function sanitizeHabits(list) {
@@ -24,38 +95,11 @@ export function sanitizeHabits(list) {
     }))
 }
 
-// Returns { habits, recovered } where `recovered` is true if saved data was damaged.
-// Damaged data is copied to a backup key instead of being thrown away.
 export function loadHabits(storage = globalThis.localStorage) {
-  let raw
-  try {
-    raw = storage.getItem(HABITS_KEY)
-  } catch {
-    return { habits: [], recovered: false } // storage blocked (e.g. strict privacy mode)
-  }
-  if (raw == null) return { habits: [], recovered: false }
-
-  try {
-    const data = JSON.parse(raw)
-    const list = Array.isArray(data) ? data : data && data.habits
-    if (!Array.isArray(list)) throw new Error('unexpected shape')
-    const habits = sanitizeHabits(list)
-    return { habits, recovered: habits.length !== list.length }
-  } catch {
-    try {
-      storage.setItem(`${HABITS_KEY}.corrupt-${Date.now()}`, raw)
-    } catch {
-      // ignore: backup is best-effort
-    }
-    return { habits: [], recovered: true }
-  }
+  const { items, recovered } = readList(HABITS_KEY, 'habits', sanitizeHabits, storage)
+  return { habits: items, recovered }
 }
 
 export function saveHabits(habits, storage = globalThis.localStorage) {
-  try {
-    storage.setItem(HABITS_KEY, JSON.stringify({ version: 1, habits }))
-    return true
-  } catch {
-    return false
-  }
+  return writeList(HABITS_KEY, 'habits', habits, storage)
 }

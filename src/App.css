@@ -236,3 +236,140 @@
 .dialog h3 { margin: 0 0 8px; font-size: 1.2rem; }
 .dialog p { color: var(--muted); margin-bottom: 20px; }
 .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ---------- Toast after saving a walk ---------- */
+.toast {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--text);
+  font-weight: 500;
+  animation: toast-in 0.25s ease-out;
+}
+@keyframes toast-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+.empty-note { margin: 16px 0 0 !important; font-size: 0.85rem; }
+
+/* ---------- Home shortcut to the urge walk ---------- */
+.urge-shortcut {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- Walk: start ---------- */
+.walk-start { display: flex; flex-direction: column; align-items: center; gap: 28px; padding-top: 8px; }
+.walk-lead { color: var(--muted); text-align: center; font-size: 1.05rem; }
+
+.urge-btn {
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--accent) 80%, white), var(--accent) 60%,
+    color-mix(in srgb, var(--accent) 70%, black));
+  color: var(--on-accent);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--accent) 14%, transparent),
+    0 0 0 22px color-mix(in srgb, var(--accent) 6%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+.urge-btn:active { transform: scale(0.97); }
+.urge-btn-title { font-size: 1.6rem; font-weight: 700; line-height: 1.15; max-width: 170px; }
+.urge-btn-sub { font-size: 0.95rem; opacity: 0.8; }
+
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  width: 100%;
+  max-width: 340px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.segment {
+  min-height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.segment.active { background: var(--accent); color: var(--on-accent); }
+
+/* ---------- Walk: in progress ---------- */
+.walk-active { display: flex; flex-direction: column; align-items: center; gap: 24px; padding-top: 8px; }
+.ring { position: relative; }
+.ring svg { display: block; }
+.ring-track { stroke: var(--border); }
+.ring-fill { stroke: var(--accent); transition: stroke-dashoffset 0.3s linear; }
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.countdown {
+  font-size: 4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.countdown-label { margin-top: 8px; color: var(--muted); font-size: 0.95rem; }
+.walk-message {
+  min-height: 3.2em;
+  max-width: 320px;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+.walk-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 340px; }
+
+/* ---------- Walk: finish ---------- */
+.walk-finish { display: flex; flex-direction: column; gap: 18px; }
+.finish-icon { font-size: 2.5rem; text-align: center; }
+.walk-finish h2 { text-align: center; font-size: 1.45rem; }
+.finish-sub { text-align: center; color: var(--muted); margin-top: -10px; }
+.finish-question { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.finish-question legend { font-size: 1.15rem; font-weight: 600; margin-bottom: 10px; text-align: center; width: 100%; }
+.finish-question .segmented { max-width: none; }
+.field textarea {
+  font: inherit;
+  font-size: 1.05rem; /* 16px+ prevents iOS zoom */
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  resize: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }

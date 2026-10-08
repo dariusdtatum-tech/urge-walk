@@ -1,5 +1,7 @@
 // A small "Are you sure?" box so nothing important happens by accident.
-function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel }) {
+function ConfirmDialog({
+  title, message, confirmLabel, cancelLabel = 'Cancel', danger = true, onConfirm, onCancel,
+}) {
   return (
     <div className="overlay overlay-center" onClick={onCancel}>
       <div
@@ -13,9 +15,9 @@ function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel }) {
         <p>{message}</p>
         <div className="dialog-actions">
           <button className="btn btn-secondary" onClick={onCancel} autoFocus>
-            Cancel
+            {cancelLabel}
           </button>
-          <button className="btn btn-danger" onClick={onConfirm}>
+          <button className={danger ? 'btn btn-danger' : 'btn btn-primary'} onClick={onConfirm}>
             {confirmLabel}
           </button>
         </div>

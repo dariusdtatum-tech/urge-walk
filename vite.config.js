@@ -21,6 +21,8 @@ export default defineConfig({
         name: 'Urge Walk',
         short_name: 'Urge Walk',
         description: 'A private, on-device companion for riding out urges.',
+        // A fixed id keeps the installed app's identity stable even if start_url changes.
+        id: BASE,
         start_url: BASE,
         scope: BASE,
         display: 'standalone',
