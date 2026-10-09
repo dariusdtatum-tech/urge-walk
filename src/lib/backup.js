@@ -3,10 +3,14 @@
 // File format (format 1):
 // {
 //   app: 'urge-walk', format: 1, exportedAt: ISO time,
-//   data: { habits: [...], walks: [...], journal: [...], walkPrefs: { choice, customMinutes } }
+//   data: { habits: [...], walks: [...], journal: [...], walkPrefs: { choice, customMinutes },
+//           milestones: { trackers: { [habitId]: { earned, seen } } } }   <- optional (added later)
 // }
+// Older backups without `milestones` still import: the milestones already passed are then marked
+// earned quietly on the next open (no celebration sheets).
 // A walk in progress and an unfinished journal draft are not included (they're temporary).
 import { todayISO } from './cleanTime.js'
+import { MILESTONES_KEY, loadMilestones, sanitizeMilestones, saveMilestones } from './milestones.js'
 import { DRAFT_KEY, JOURNAL_KEY, loadJournal, sanitizeEntries, saveJournal } from './journal.js'
 import { HABITS_KEY, loadHabits, readObject, sanitizeHabits, saveHabits, writeObject } from './storage.js'
 import {
@@ -25,7 +29,7 @@ export const NUDGE_AFTER_DAYS = 7
 const DAY_MS = 24 * 60 * 60 * 1000
 
 // Every key an import replaces (and the safety copy saves).
-const DATA_KEYS = [HABITS_KEY, WALKS_KEY, JOURNAL_KEY, WALK_PREFS_KEY, ACTIVE_WALK_KEY, DRAFT_KEY]
+const DATA_KEYS = [HABITS_KEY, WALKS_KEY, JOURNAL_KEY, WALK_PREFS_KEY, MILESTONES_KEY, ACTIVE_WALK_KEY, DRAFT_KEY]
 
 // ---------- Export ----------
 
@@ -39,6 +43,7 @@ export function buildBackup(storage = globalThis.localStorage, now = Date.now())
       walks: loadWalks(storage).walks,
       journal: loadJournal(storage).entries,
       walkPrefs: loadWalkPrefs(storage),
+      milestones: { trackers: loadMilestones(storage).trackers },
     },
   }
 }
@@ -104,6 +109,15 @@ export function validateBackup(text) {
   if (!walkPrefs) return fail(`${NOT_A_BACKUP} (Settings are damaged.)`)
   data.walkPrefs = walkPrefs
 
+  // Milestone history is optional (older backups don't have it). Damaged entries are dropped,
+  // and only trackers that are in this backup are kept.
+  if (d.milestones != null) {
+    if (typeof d.milestones !== 'object' || Array.isArray(d.milestones)) return fail(`${NOT_A_BACKUP} (Milestones are damaged.)`)
+    const clean = sanitizeMilestones(d.milestones)
+    const ids = new Set(data.habits.map((h) => h.id))
+    data.milestones = { trackers: Object.fromEntries(Object.entries(clean.trackers).filter(([id]) => ids.has(id))) }
+  }
+
   const backup = { app: APP_NAME, format: raw.format, exportedAt: raw.exportedAt, data }
   const summary = {
     habits: data.habits.length,
@@ -144,7 +158,9 @@ export function applyBackup(backup, storage = globalThis.localStorage, now = Dat
   if (!writeObject(UNDO_KEY, undo, storage)) return false // couldn't save the safety copy: don't touch anything
   const { habits, walks, journal, walkPrefs } = backup.data
   const ok = saveHabits(habits, storage) && saveWalks(walks, storage) && saveJournal(journal, storage) &&
-    saveWalkPrefs(walkPrefs, storage)
+    saveWalkPrefs(walkPrefs, storage) &&
+    // No milestone history in the file: clear it, so passed milestones are backfilled quietly on next open.
+    (backup.data.milestones ? saveMilestones(backup.data.milestones, storage) : writeObject(MILESTONES_KEY, null, storage))
   // The backup's data replaces any walk in progress or unfinished draft.
   writeObject(ACTIVE_WALK_KEY, null, storage)
   writeObject(DRAFT_KEY, null, storage)

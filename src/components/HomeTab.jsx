@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { dismissNudge, loadBackupMeta, shouldNudge } from '../lib/backup.js'
-import { RANGES, RANGE_IDS, bucketCounts, cleanDays, heroHabit, makePrimary, rangeBuckets, rangeStats, shortDate } from '../lib/homeStats.js'
+import { todayISO } from '../lib/cleanTime.js'
+import { cleanDays, heroHabit, loadRange, makePrimary, saveRange, shortDate } from '../lib/homeStats.js'
+import {
+  backfillTracker, loadMilestones, removeTracker, ringLabel, ringSegment, saveMilestones, syncMilestones,
+} from '../lib/milestones.js'
 import { loadJournal } from '../lib/journal.js'
 import { isIOS } from '../lib/persist.js'
 import { loadHabits, makeId, saveHabits } from '../lib/storage.js'
@@ -8,13 +12,14 @@ import { useNow, useToday } from '../lib/useToday.js'
 import { loadActiveWalk, loadWalks } from '../lib/walkStorage.js'
 import HabitSheet from './HabitSheet.jsx'
 import HeroRing from './HeroRing.jsx'
-import { FlameIcon } from './Icons.jsx'
+import { MilestoneRow, MilestoneSheet, MilestonesList } from './Milestones.jsx'
 import PageHeader from './PageHeader.jsx'
 import TrackerSheet from './TrackerSheet.jsx'
-import WeekChart from './WeekChart.jsx'
+import WalksCard from './WalksCard.jsx'
 
-// Home: one ring for the main tracker, a D / W / M toggle for the chips and chart,
-// three stat chips and the "urges walked" line.
+// Home: one ring for the main tracker (progress toward its next milestone), the "Your walks" card
+// (Week / Month / All time changes only the card) and the Milestones badge row.
+// Reaching a milestone shows one calm sheet, once per milestone per tracker.
 function HomeTab({ onUrge, onOpenBackup }) {
   const today = useToday()
   const now = useNow()
@@ -25,10 +30,13 @@ function HomeTab({ onUrge, onOpenBackup }) {
   const [notice, setNotice] = useState(
     initial.recovered ? 'Some saved data was damaged and couldn’t be read. A backup was kept on this phone.' : '',
   )
-  // null = closed, { mode: 'manage' }, { mode: 'add', from }, or { mode: 'edit', habit, from }
+  // null = closed, { mode: 'manage' }, { mode: 'add', from }, { mode: 'edit', habit, from }, or { mode: 'milestones' }
   const [sheet, setSheet] = useState(null)
-  // D / W / M: changes the chips and the chart only, never the ring.
-  const [range, setRange] = useState('W')
+  // Week / Month / All time: changes the walks card only, never the ring. Remembered.
+  const [range, setRange] = useState(() => loadRange())
+  const [milestones, setMilestones] = useState(() => loadMilestones())
+  // Milestone sheets waiting to be shown: [{ habitId, milestone }]
+  const [celebrations, setCelebrations] = useState([])
   const walkInProgress = loadActiveWalk() != null
   // Gentle backup reminder (data only lives on this phone)
   const [showNudge, setShowNudge] = useState(() => shouldNudge(
@@ -41,6 +49,23 @@ function HomeTab({ onUrge, onOpenBackup }) {
     if (!saveHabits(next)) setNotice('Couldn’t save on this phone. Is private browsing on?')
   }
 
+  function storeMilestones(next) {
+    saveMilestones(next)
+    setMilestones(next)
+  }
+
+  // Bring milestones up to date on open and whenever the date rolls over (midnight) or trackers change.
+  // The phone's storage is the source of truth, so this never double-counts.
+  useEffect(() => {
+    const result = syncMilestones(loadMilestones(), habits, today)
+    if (!result.changed) return
+    saveMilestones(result.data)
+    // Reacting to the calendar (an outside system) is what this effect is for.
+    // eslint-disable-next-line react/set-state-in-effect
+    setMilestones(result.data)
+    if (result.celebrate.length > 0) setCelebrations((q) => [...q, ...result.celebrate])
+  }, [habits, today])
+
   // After adding/editing from the Edit sheet, go back to it.
   const back = () => setSheet(sheet?.from === 'manage' ? { mode: 'manage' } : null)
 
@@ -48,23 +73,37 @@ function HomeTab({ onUrge, onOpenBackup }) {
     if (sheet.mode === 'add') {
       update([...habits, { id: makeId(), ...values }])
     } else {
-      update(habits.map((h) => (h.id === sheet.habit.id ? { ...h, ...values } : h)))
+      const habit = { ...sheet.habit, ...values }
+      // A new start date: milestones it has already passed are earned quietly (no sheets).
+      // Earned milestones are never removed, so a reset keeps them.
+      if (values.startDate !== sheet.habit.startDate) storeMilestones(backfillTracker(loadMilestones(), habit, todayISO()))
+      update(habits.map((h) => (h.id === sheet.habit.id ? habit : h)))
     }
     back()
   }
 
   function handleDelete() {
+    storeMilestones(removeTracker(loadMilestones(), sheet.habit.id))
     update(habits.filter((h) => h.id !== sheet.habit.id))
     back()
   }
 
+  function handleRange(id) {
+    setRange(id)
+    saveRange(id)
+  }
+
   const hero = heroHabit(habits)
   const days = cleanDays(hero, today)
-  const stats = rangeStats(walks, range, now)
-  const buckets = rangeBuckets(range, now)
-  const sub = RANGES[range].sub
+  const segment = ringSegment(days)
+  const label = ringLabel(days)
   let since = ''
   if (hero) since = hero.startDate > today ? `starts ${shortDate(hero.startDate, today)}` : `since ${shortDate(hero.startDate, today)}`
+  // All time starts at the tracker's start date (or the first walk, if that's earlier).
+  const firstWalk = walks.reduce((min, w) => (w.startedAt < min ? w.startedAt : min), '9999')
+  const allSince = [hero?.startDate, firstWalk === '9999' ? null : todayISO(new Date(firstWalk))].filter(Boolean).sort()[0] || today
+  const celebration = celebrations[0]
+  const celebrated = celebration && habits.find((h) => h.id === celebration.habitId)
 
   return (
     <div className="home">
@@ -88,24 +127,13 @@ function HomeTab({ onUrge, onOpenBackup }) {
         </button>
       )}
 
-      {(hero || walks.length > 0) && (
-        <div className="range-toggle" role="group" aria-label="Chips and chart range">
-          {RANGE_IDS.map((id) => (
-            <button
-              key={id}
-              className={id === range ? 'range-btn active' : 'range-btn'}
-              aria-pressed={id === range}
-              aria-label={RANGES[id].name}
-              onClick={() => setRange(id)}
-            >
-              {id}
-            </button>
-          ))}
-        </div>
-      )}
-
       {hero ? (
-        <HeroRing name={hero.name} days={days} caption={since} />
+        <div className="hero-block">
+          <HeroRing name={hero.name} days={days} caption={since} progress={segment.progress} celebrate={segment.isToday} />
+          <p className="ring-label" data-testid="ring-label">
+            <b>{label.lead}</b><span>{label.rest}</span>
+          </p>
+        </div>
       ) : (
         <section className="empty">
           <div className="empty-icon" aria-hidden="true">🌅</div>
@@ -124,30 +152,10 @@ function HomeTab({ onUrge, onOpenBackup }) {
       )}
 
       {(hero || walks.length > 0) && (
-        <>
-          <div className={hero ? 'chips' : 'chips chips-2'} data-testid="chips">
-            {hero && (
-              <div className="chip-stat" data-testid="chip-streak">
-                <span className="stat-num"><FlameIcon />{days.toLocaleString()}</span>
-                <span className="stat-label">Streak</span>
-                <span className="stat-sub">clean</span>
-              </div>
-            )}
-            <div className="chip-stat" data-testid="chip-walked">
-              <span className="stat-num">{stats.walked}</span>
-              <span className="stat-label">Walked</span>
-              <span className="stat-sub">{sub}</span>
-            </div>
-            <div className="chip-stat" data-testid="chip-passed">
-              <span className="stat-num">{stats.passed}</span>
-              <span className="stat-label">Passed</span>
-              <span className="stat-sub">{sub}</span>
-            </div>
-          </div>
-
-          <WeekChart title={RANGES[range].title} buckets={buckets} counts={bucketCounts(walks, buckets)} />
-        </>
+        <WalksCard walks={walks} range={range} onRange={handleRange} streak={hero ? days : null} now={now} since={allSince} />
       )}
+
+      {hero && <MilestoneRow data={milestones} habitId={hero.id} onOpen={() => setSheet({ mode: 'milestones' })} />}
 
       {showNudge && (
         <div className="nudge" data-testid="backup-nudge">
@@ -157,6 +165,17 @@ function HomeTab({ onUrge, onOpenBackup }) {
         </div>
       )}
 
+      {sheet?.mode === 'milestones' && (
+        <MilestonesList data={milestones} habit={hero} today={today} onClose={() => setSheet(null)} />
+      )}
+      {celebrated && !sheet && (
+        <MilestoneSheet
+          milestone={celebration.milestone}
+          habitName={celebrated.name}
+          showName={habits.length > 1}
+          onDone={() => setCelebrations((q) => q.slice(1))}
+        />
+      )}
       {sheet?.mode === 'manage' && (
         <TrackerSheet
           habits={habits}

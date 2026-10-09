@@ -1,53 +1,53 @@
 // The Home ring: the hero tracker's clean days.
-// The arc is "momentum" around the number, always drawn to the same length.
-// It is deliberately NOT a goal or a quota (no "of 365"), so a clean day never looks unfinished.
-export const HERO_ARC = 0.85
-
-function HeroRing({ name, days, caption, size = 248, stroke = 18 }) {
+// The arc shows progress through the current milestone segment only (e.g. 90 → 180 days).
+// On a milestone day it's full, and `celebrate` adds one slow cyan glow (none with reduced motion).
+function HeroRing({ name, days, caption, progress, celebrate = false, size = 214, stroke = 16 }) {
   const c = size / 2
   const r = (size - stroke) / 2 - 6 // room for the glow
   const circumference = 2 * Math.PI * r
-  const arc = circumference * HERO_ARC
-  // End of the arc (for the glowing cap), measured clockwise from 12 o'clock.
-  const angle = 2 * Math.PI * HERO_ARC - Math.PI / 2
-  const capX = c + r * Math.cos(angle)
-  const capY = c + r * Math.sin(angle)
+  const p = Math.min(Math.max(progress, 0), 1)
+  const arc = circumference * p
   const digits = days.toLocaleString()
   let numberClass = 'hero-number'
   if (digits.length > 5) numberClass += ' hero-number-xs'
   else if (digits.length > 3) numberClass += ' hero-number-sm'
 
   return (
-    <div className="hero-ring" style={{ width: size, height: size }} data-testid="hero-ring">
+    <div
+      className={celebrate ? 'hero-ring hero-celebrate' : 'hero-ring'}
+      style={{ width: size, height: size }}
+      data-testid="hero-ring"
+      data-progress={p.toFixed(3)}
+    >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <defs>
           <linearGradient id="hero-arc" x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#25b9da" />
-            <stop offset="0.55" stopColor="#3de4ff" />
+            <stop offset="0" stopColor="#3de4ff" />
+            <stop offset="0.6" stopColor="#4fe6ff" />
             <stop offset="1" stopColor="#8ff3ff" />
           </linearGradient>
           <filter id="hero-glow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="5" result="b" />
+            <feGaussianBlur stdDeviation="4" result="b" />
             <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
         </defs>
         <circle className="hero-track" cx={c} cy={c} r={r} strokeWidth={stroke} fill="none" />
-        <circle className="hero-inner" cx={c} cy={c} r={r - stroke / 2 - 16} />
-        <circle
-          className="hero-arc"
-          cx={c}
-          cy={c}
-          r={r}
-          strokeWidth={stroke}
-          fill="none"
-          stroke="url(#hero-arc)"
-          strokeLinecap="round"
-          strokeDasharray={`${arc} ${circumference}`}
-          transform={`rotate(-90 ${c} ${c})`}
-          filter="url(#hero-glow)"
-          style={{ '--arc': arc, '--circ': circumference }}
-        />
-        <circle className="hero-cap" cx={capX} cy={capY} r={stroke / 2 - 1} filter="url(#hero-glow)" />
+        <circle className="hero-inner" cx={c} cy={c} r={r - stroke / 2 - 12} />
+        {p > 0 && (
+          <circle
+              className="hero-arc"
+              cx={c}
+              cy={c}
+              r={r}
+              strokeWidth={stroke}
+              fill="none"
+              stroke="url(#hero-arc)"
+              strokeLinecap="round"
+              strokeDasharray={`${arc} ${circumference}`}
+              transform={`rotate(-90 ${c} ${c})`}
+              filter="url(#hero-glow)"
+            />
+        )}
       </svg>
       <div className="hero-center">
         <span className="hero-name" data-testid="hero-name">{name}</span>

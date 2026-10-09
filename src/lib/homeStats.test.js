@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  RANGE_IDS, bucketCounts, chartPoints, cleanDays, heroHabit, makePrimary, rangeBuckets, rangeStats, shortDate,
-  smoothPath,
+  RANGE_IDS, RANGE_PREFS_KEY, bucketCounts, chartPoints, cleanDays, heroHabit, loadRange, makePrimary, rangeBuckets,
+  rangeStats, saveRange, shortDate, smoothPath, threeDayAverage,
 } from './homeStats.js'
 
 // Thursday Oct 8, 2026, 9:41 PM in New York (tests run with TZ=America/New_York)
@@ -49,33 +49,57 @@ describe('shortDate', () => {
   })
 })
 
-describe('D / W / M ranges', () => {
-  it('W = the last 7 days ending today, Fri..Thu', () => {
-    const b = rangeBuckets('W', NOW)
-    expect(b.map((x) => x.label)).toEqual(['FRI', 'SAT', 'SUN', 'MON', 'TUE', 'WED', 'THU'])
+describe('Week / Month / All time ranges', () => {
+  it('Week = the last 7 days ending today, Fri..Thu, today highlighted', () => {
+    const b = rangeBuckets('week', NOW)
+    expect(b.map((x) => x.label)).toEqual(['Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'])
     expect(b.map((x) => x.current)).toEqual([false, false, false, false, false, false, true])
     expect(b[0].start).toBe(new Date(2026, 9, 2).getTime())
     expect(b[6].end).toBe(new Date(2026, 9, 9).getTime())
   })
-  it('D = six 4-hour blocks of today; the current one is highlighted', () => {
-    const b = rangeBuckets('D', NOW)
-    expect(b.map((x) => x.label)).toEqual(['12A', '4A', '8A', '12P', '4P', '8P'])
-    expect(b.findIndex((x) => x.current)).toBe(5)
-  })
-  it('M = 30 days, labelled every 7th day back from today', () => {
-    const b = rangeBuckets('M', NOW)
+  it('Month = the last 30 days with sparse labels (first, +10, +20, today)', () => {
+    const b = rangeBuckets('month', new Date(2026, 9, 9, 9, 41).getTime())
     expect(b).toHaveLength(30)
-    expect(b.filter((x) => x.showLabel).map((x) => x.label)).toEqual(['Sep 10', 'Sep 17', 'Sep 24', 'Oct 1', 'Oct 8'])
+    expect(b.filter((x) => x.showLabel).map((x) => x.label)).toEqual(['Sep 10', 'Sep 20', 'Sep 30', 'Oct 9'])
     expect(b[29].current).toBe(true)
+    expect(b.every((x, i) => i === 0 || x.start === b[i - 1].end)).toBe(true)
+  })
+  it('All time = weekly buckets since the tracker start, the last ending today', () => {
+    const b = rangeBuckets('all', NOW, '2026-04-27') // 165 days -> 24 weeks
+    expect(b).toHaveLength(24)
+    expect(b.every((x) => (x.end - x.start) / 86400000 >= 6.9 && (x.end - x.start) / 86400000 <= 7.1)).toBe(true)
+    expect(b[23].end).toBe(new Date(2026, 9, 9).getTime())
+    expect(b[0].start).toBeLessThanOrEqual(new Date(2026, 3, 28).getTime())
+    expect(b.filter((x) => x.showLabel)).toHaveLength(4)
+  })
+  it('All time stays readable for very long histories (wider buckets, <= 52 points)', () => {
+    const b = rangeBuckets('all', NOW, '2006-01-01')
+    expect(b.length).toBeLessThanOrEqual(52)
+    expect(b.length).toBeGreaterThan(40)
+    expect(rangeBuckets('all', NOW, '2026-10-08').length).toBe(2) // brand-new tracker still draws a line
+    expect(rangeBuckets('all', NOW, null).length).toBe(2)
   })
   it('days are calendar days even across the DST change (Nov 1, 2026)', () => {
-    const b = rangeBuckets('W', new Date(2026, 10, 3, 12).getTime())
+    const b = rangeBuckets('week', new Date(2026, 10, 3, 12).getTime())
     const lengths = b.map((x) => (x.end - x.start) / 3600000)
     expect(lengths).toContain(25)
     expect(b[6].start).toBe(new Date(2026, 10, 3).getTime())
   })
   it('every range id builds buckets', () => {
-    for (const id of RANGE_IDS) expect(rangeBuckets(id, NOW).length).toBeGreaterThan(0)
+    for (const id of RANGE_IDS) expect(rangeBuckets(id, NOW, '2026-01-01').length).toBeGreaterThan(0)
+  })
+})
+
+describe('3-day average', () => {
+  it('is centered; the ends use the days that exist', () => {
+    expect(threeDayAverage([0, 3, 0, 0, 6])).toEqual([1.5, 1, 1, 2, 3])
+    expect(threeDayAverage([2])).toEqual([2])
+    expect(threeDayAverage([])).toEqual([])
+  })
+  it('keeps the total roughly and never goes below zero', () => {
+    const a = threeDayAverage([0, 0, 1, 0, 0])
+    expect(Math.min(...a)).toBeGreaterThanOrEqual(0)
+    expect(a.reduce((x, y) => x + y, 0)).toBeCloseTo(1)
   })
 })
 
@@ -88,18 +112,30 @@ describe('chips and chart numbers', () => {
     walk('2026-09-20T16:00:00.000Z', 'yes'),
     walk('2025-12-31T03:00:00.000Z', null),
   ]
-  it('W: 3 walked, 1 passed; the ring is not involved', () => {
-    expect(rangeStats(walks, 'W', NOW)).toEqual({ walked: 3, passed: 1 })
+  it('Week: 3 walked, 1 passed', () => {
+    expect(rangeStats(walks, 'week', NOW)).toEqual({ walked: 3, passed: 1 })
   })
-  it('D and M change only these numbers', () => {
-    expect(rangeStats(walks, 'D', NOW)).toEqual({ walked: 2, passed: 1 })
-    expect(rangeStats(walks, 'M', NOW)).toEqual({ walked: 4, passed: 2 })
+  it('Month and All time change only these numbers', () => {
+    expect(rangeStats(walks, 'month', NOW)).toEqual({ walked: 4, passed: 2 })
+    expect(rangeStats(walks, 'all', NOW)).toEqual({ walked: 5, passed: 2 })
   })
   it('weekly line: Fri-Tue 0, Wed 1, Thu 2', () => {
-    expect(bucketCounts(walks, rangeBuckets('W', NOW))).toEqual([0, 0, 0, 0, 0, 1, 2])
+    expect(bucketCounts(walks, rangeBuckets('week', NOW))).toEqual([0, 0, 0, 0, 0, 1, 2])
   })
-  it('walks after now (clock changed) are not counted in today', () => {
-    expect(rangeStats([walk('2026-10-09T05:00:00.000Z', 'yes')], 'D', NOW)).toEqual({ walked: 0, passed: 0 })
+  it('all-time buckets count every walk since the start', () => {
+    const counts = bucketCounts(walks, rangeBuckets('all', NOW, '2025-12-30'))
+    expect(counts.reduce((a, b) => a + b, 0)).toBe(5)
+  })
+  it('the range is remembered (default Week, bad values ignored)', () => {
+    const store = new Map()
+    const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) }
+    expect(loadRange(storage)).toBe('week')
+    saveRange('month', storage)
+    expect(loadRange(storage)).toBe('month')
+    store.set(RANGE_PREFS_KEY, '{"walksRange":"D"}')
+    expect(loadRange(storage)).toBe('week')
+    store.set(RANGE_PREFS_KEY, 'garbage')
+    expect(loadRange(storage)).toBe('week')
   })
 })
 

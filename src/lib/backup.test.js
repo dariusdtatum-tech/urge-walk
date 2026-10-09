@@ -46,7 +46,7 @@ describe('export', () => {
     expect(b.app).toBe(APP_NAME)
     expect(b.format).toBe(BACKUP_FORMAT)
     expect(b.exportedAt).toBe('2026-10-08T13:30:00.000Z')
-    expect(Object.keys(b.data)).toEqual(['habits', 'walks', 'journal', 'walkPrefs'])
+    expect(Object.keys(b.data)).toEqual(['habits', 'walks', 'journal', 'walkPrefs', 'milestones'])
     expect(b.data.habits).toHaveLength(2)
     expect(b.data.walks).toHaveLength(2)
     expect(b.data.journal[0].body).toBe('Private words')
@@ -196,3 +196,54 @@ describe('backup reminder', () => {
     expect(loadBackupMeta(memoryStorage({ 'urgewalk.v1.backupMeta': '{x' }))).toEqual({ lastBackupAt: null, nudgeDismissedAt: null })
   })
 })
+
+describe('milestones in backups', () => {
+  const withMilestones = () => {
+    const s = seeded()
+    s.setItem('urgewalk.v1.milestones', JSON.stringify({ version: 1, trackers: {
+      h1: { earned: { 7: '2025-01-22', 30: '2025-02-14' }, seen: [7, 30] },
+    } }))
+    return s
+  }
+  it('round-trips the earned / seen history', () => {
+    const text = JSON.stringify(buildBackup(withMilestones(), T0))
+    const v = validateBackup(text)
+    expect(v.ok).toBe(true)
+    const phone = memoryStorage()
+    expect(applyBackup(v.backup, phone, T0)).toBe(true)
+    expect(JSON.parse(phone.data['urgewalk.v1.milestones']).trackers).toEqual({
+      h1: { earned: { 7: '2025-01-22', 30: '2025-02-14' }, seen: [7, 30] },
+    })
+    expect(buildBackup(phone, T0).data.milestones).toEqual(buildBackup(withMilestones(), T0).data.milestones)
+  })
+  it('old backups without milestones still import (and clear stale history so it is rebuilt quietly)', () => {
+    const old = buildBackup(seeded(), T0)
+    delete old.data.milestones
+    const v = validateBackup(JSON.stringify(old))
+    expect(v.ok).toBe(true)
+    expect(v.backup.data.milestones).toBeUndefined()
+    const phone = withMilestones()
+    expect(applyBackup(v.backup, phone, T0)).toBe(true)
+    expect(phone.getItem('urgewalk.v1.milestones')).toBeNull()
+  })
+  it('damaged milestones: wrong type is rejected, bad entries are dropped, unknown trackers are dropped', () => {
+    expect(validateBackup(fileText({}, { milestones: 'oops' })).ok).toBe(false)
+    expect(validateBackup(fileText({}, { milestones: [] })).ok).toBe(false)
+    const v = validateBackup(fileText({}, { milestones: { trackers: {
+      h1: { earned: { 7: '2025-01-22', 9: '2025-01-24', 30: 'x' }, seen: [7, 'y'] },
+      ghost: { earned: { 7: '2025-01-22' }, seen: [7] },
+    } } }))
+    expect(v.ok).toBe(true)
+    expect(v.backup.data.milestones.trackers).toEqual({ h1: { earned: { 7: '2025-01-22' }, seen: [7] } })
+  })
+  it('undo puts the previous milestone history back', () => {
+    const phone = withMilestones()
+    const before = phone.getItem('urgewalk.v1.milestones')
+    const old = buildBackup(seeded(), T0)
+    delete old.data.milestones
+    applyBackup(validateBackup(JSON.stringify(old)).backup, phone, T0)
+    expect(undoImport(phone)).toBeTruthy()
+    expect(phone.getItem('urgewalk.v1.milestones')).toBe(before)
+  })
+})
+

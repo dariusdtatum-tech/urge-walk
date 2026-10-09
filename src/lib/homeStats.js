@@ -33,50 +33,64 @@ export function shortDate(iso, todayKey = todayISO()) {
   })
 }
 
-// ---------- D / W / M ----------
-// D = today (since midnight), W = the last 7 days, M = the last 30 days (both ending today).
+// ---------- "Your walks" card: Week / Month / All time ----------
+// Week = the last 7 days (daily points), Month = the last 30 days (shown as a 3-day average),
+// All time = weekly buckets since the tracker started (or the first walk). Ending today.
+// These change only the card (Walked, Passed, chart). Clean days never depend on them.
 export const RANGES = {
-  D: { id: 'D', name: 'Day', title: 'Today', sub: 'today' },
-  W: { id: 'W', name: 'Week', title: 'This week', sub: 'this week' },
-  M: { id: 'M', name: 'Month', title: 'Last 30 days', sub: '30 days' },
+  week: { id: 'week', name: 'Week' },
+  month: { id: 'month', name: 'Month', caption: '3-day avg · urges walked' },
+  all: { id: 'all', name: 'All time' },
 }
-export const RANGE_IDS = ['D', 'W', 'M']
-
-const HOUR_LABELS = ['12A', '4A', '8A', '12P', '4P', '8P']
+export const RANGE_IDS = ['week', 'month', 'all']
+export const RANGE_PREFS_KEY = 'urgewalk.v1.homePrefs'
+const MAX_ALL_TIME_POINTS = 52
 
 function midnight(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
-// The chart's buckets for a range, oldest first: [{ start, end, label, showLabel, current }]
-// start/end are milliseconds (end exclusive). Built from local calendar dates, so DST is fine.
-export function rangeBuckets(rangeId, now = Date.now()) {
-  const today = midnight(new Date(now))
+const dayLabelShort = (d) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+
+// Buckets of `size` calendar days, `count` of them, the last one ending today (local time, DST-safe).
+function dayBuckets(today, count, size) {
   const y = today.getFullYear()
   const m = today.getMonth()
   const d = today.getDate()
-  const buckets = []
-  if (rangeId === 'D') {
-    for (let i = 0; i < 6; i += 1) {
-      const start = new Date(y, m, d, i * 4).getTime()
-      const end = new Date(y, m, d, (i + 1) * 4).getTime()
-      buckets.push({ start, end, label: HOUR_LABELS[i], showLabel: true, current: now >= start && now < end })
-    }
-    return buckets
-  }
-  const count = rangeId === 'M' ? 30 : 7
+  const out = []
   for (let i = count - 1; i >= 0; i -= 1) {
-    const day = new Date(y, m, d - i)
-    const start = day.getTime()
-    const end = new Date(y, m, d - i + 1).getTime()
-    const label = rangeId === 'M'
-      ? day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-      : day.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()
-    // A month has too many days to label them all: label every 7th day, counting back from today.
-    const showLabel = rangeId !== 'M' || i % 7 === 0
-    buckets.push({ start, end, label, showLabel, current: i === 0 })
+    const first = new Date(y, m, d - i * size - (size - 1))
+    out.push({ start: first.getTime(), end: new Date(y, m, d - i * size + 1).getTime(), first, current: i === 0 })
   }
-  return buckets
+  return out
+}
+
+// The chart's buckets, oldest first: [{ start, end, label, showLabel, current }] (start/end in ms, end exclusive).
+// `since` ('YYYY-MM-DD') is where All time begins.
+export function rangeBuckets(rangeId, now = Date.now(), since = null) {
+  const today = midnight(new Date(now))
+  if (rangeId === 'month') {
+    return dayBuckets(today, 30, 1).map((b, i) => ({
+      ...b, label: dayLabelShort(b.first), showLabel: i === 0 || i === 10 || i === 20 || i === 29,
+    }))
+  }
+  if (rangeId === 'all') {
+    let days = 7
+    const p = since && parseISODate(since)
+    if (p) days = Math.max(1, Math.round((today - new Date(p.y, p.m - 1, p.d)) / 86400000) + 1)
+    // Weekly points; for very long histories, wider buckets so the line stays readable.
+    const weeks = Math.max(2, Math.ceil(days / 7))
+    const size = 7 * Math.ceil(weeks / MAX_ALL_TIME_POINTS)
+    const count = Math.max(2, Math.ceil(days / size))
+    const buckets = dayBuckets(today, count, size)
+    const marks = new Set([0, Math.round((count - 1) / 3), Math.round((2 * (count - 1)) / 3), count - 1])
+    return buckets.map((b, i) => ({
+      ...b, label: dayLabelShort(b.first), showLabel: marks.has(i) && (count >= 4 || i === 0 || i === count - 1),
+    }))
+  }
+  return dayBuckets(today, 7, 1).map((b) => ({
+    ...b, label: b.first.toLocaleDateString(undefined, { weekday: 'short' }), showLabel: true,
+  }))
 }
 
 // How many walks started in each bucket.
@@ -90,11 +104,23 @@ export function bucketCounts(walks, buckets) {
   return counts
 }
 
-// Numbers for the "Walked" and "Passed" chips.
+// Centered 3-day moving average (the ends use the days that exist).
+export function threeDayAverage(counts) {
+  return counts.map((_, i) => {
+    const win = counts.slice(Math.max(0, i - 1), i + 2)
+    return win.reduce((a, b) => a + b, 0) / win.length
+  })
+}
+
+// Numbers for the Walked and Passed chips. All time counts every walk.
 export function rangeStats(walks, rangeId, now = Date.now()) {
-  const buckets = rangeBuckets(rangeId, now)
-  const from = buckets[0].start
-  const to = buckets[buckets.length - 1].end
+  let from = -Infinity
+  let to = Infinity
+  if (rangeId !== 'all') {
+    const buckets = rangeBuckets(rangeId, now)
+    from = buckets[0].start
+    to = buckets[buckets.length - 1].end
+  }
   let walked = 0
   let passed = 0
   for (const w of walks) {
@@ -105,6 +131,25 @@ export function rangeStats(walks, rangeId, now = Date.now()) {
     }
   }
   return { walked, passed }
+}
+
+// Remembered card range (default Week).
+export function loadRange(storage = globalThis.localStorage) {
+  try {
+    const p = JSON.parse(storage.getItem(RANGE_PREFS_KEY))
+    return RANGE_IDS.includes(p?.walksRange) ? p.walksRange : 'week'
+  } catch {
+    return 'week'
+  }
+}
+
+export function saveRange(rangeId, storage = globalThis.localStorage) {
+  try {
+    storage.setItem(RANGE_PREFS_KEY, JSON.stringify({ version: 1, walksRange: rangeId }))
+    return true
+  } catch {
+    return false
+  }
 }
 
 // ---------- Chart geometry ----------

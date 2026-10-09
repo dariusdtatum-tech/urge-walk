@@ -5,7 +5,7 @@ A simple installable web app (PWA) that helps you ride out an urge by taking a s
 **Privacy:** everything stays on your device (browser storage only). No accounts, no server, no tracking.
 
 **Status:**
-- **Home** — one ring with your main tracker's clean days (the arc is decoration, not a goal). A small **D / W / M** toggle changes only the stat chips (streak · walked · passed) and the "urges walked" line chart; the ring number never changes. **Edit** holds every tracker (add, edit, reset, delete, *Show on Home*) and **Backup & restore**.
+- **Home** — one ring with your main tracker's clean days. The arc fills toward the **next milestone** (7, 30, 60, 90 days, 6 months, 1 year, then every year), showing only the current stretch — e.g. 165 days = 83% of 90 → 180 — with "15 days to 6 months" underneath ("6 months today" on the day). The **Your walks** card has its own **Week / Month / All time** switch (remembered) that changes only what's inside the card: Walked, Passed and the "urges walked" line (Week = daily, Month = 30 days as a 3-day average, All time = weekly since the start). The Streak chip and the ring never change with it. A **Milestones** row shows earned badges plus the next one; tap it for the full list with earned dates. On the day a milestone is reached (on opening, or at midnight) the ring fills, glows once, and a calm sheet says *That's yours.* — once per milestone per tracker. Earned milestones are kept even after a reset and aren't celebrated twice. **Edit** holds every tracker (add, edit, reset, delete, *Show on Home*) and **Backup & restore**.
 - **Walk** — one big "I have an urge" button starts right away at your remembered length; **Change length** reveals 5 · 10 · 15 · Custom (1–120 min) · Open. The cyan **+** in the tab bar opens this screen but never starts the timer. While walking, the app goes into focus mode (no header or tab bar): **Finish walk**, a quiet **Pause**, and **+5 min** for timed walks; open walks count up inside a slowly breathing ring. The timer is based on saved timestamps, so it stays correct if the screen locks or the app is closed (reopening goes straight back to the walk).
 - **Log** — "N urges walked off", a 4-up outcome row (Passed · Kinda · Didn't · No check-in), **This week** day rings coloured by outcome, and history grouped by day; tap a walk to edit its result/note or delete it. "Didn't pass" is how one urge went — it never resets a clean-day count.
 - **Journal** — private entries (optional title, mood, writing prompts) with drafts autosaved as you type, search, and your walk notes shown alongside (read from the walk log, not copied).
@@ -37,10 +37,12 @@ npm run preview    # serve the production build (http://localhost:4173/urge-walk
 | `urgewalk.v1.journal` | `{ version: 1, entries: [{ id, createdAt, updatedAt, title, body, mood }] }` |
 | `urgewalk.v1.journalDraft` | the entry being written (removed on Done/Discard) |
 | `urgewalk.v1.walkPrefs` | `{ version: 1, choice: 5 \| 10 \| 15 \| 'custom' \| 'open', customMinutes }` — last choice and custom length |
+| `urgewalk.v1.milestones` | `{ version: 1, trackers: { [habitId]: { earned: { '180': 'YYYY-MM-DD', … }, seen: [7, 30, …] } } }` — earned milestones (date = start date + milestone days; kept after a reset) and which celebration sheets were already shown. Missing (older versions, or a backup without it): milestones already passed are filled in quietly, with no sheets. Included in backups |
+| `urgewalk.v1.homePrefs` | `{ version: 1, walksRange: 'week' \| 'month' \| 'all' }` — last choice in the Your walks card |
 | `urgewalk.v1.backupMeta` | `{ version: 1, lastBackupAt, nudgeDismissedAt }` — for "Last backup" and the reminder |
 | `urgewalk.v1.importUndo` | `{ version: 1, savedAt, values }` — raw copy of the data keys taken right before an import (replaced by the next import, removed on undo) |
 
-Backup file: `{ app: 'urge-walk', format: 1, exportedAt, data: { habits, walks, journal, walkPrefs } }` (the walk in progress and unsaved drafts are not included).
+Backup file: `{ app: 'urge-walk', format: 1, exportedAt, data: { habits, walks, journal, walkPrefs, milestones } }` — `milestones` is optional, so older backups still import (the walk in progress and unsaved drafts are not included).
 
 Damaged data is copied to `<key>.corrupt-<timestamp>` instead of being deleted.
 
