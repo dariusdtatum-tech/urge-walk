@@ -55,21 +55,15 @@ export function ChevronDown() {
   )
 }
 
-// A small warm flame for the Streak chip (an icon, not a celebration).
+// A small flame for the Streak chip (an icon, not a celebration). Takes the text colour
+// (set to sea glass by the chip), so it follows the theme.
 export function FlameIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="flame-g" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor="#ff8a3d" />
-          <stop offset="1" stopColor="#ffc35c" />
-        </linearGradient>
-      </defs>
+    <svg width="14" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path
-        fill="url(#flame-g)"
+        fill="currentColor"
         d="M12 2.5c.6 3-1.6 4.6-3.2 6.6C7.4 10.9 6.5 12.6 6.5 14.7A5.5 5.5 0 0 0 12 20.5a5.5 5.5 0 0 0 5.5-5.8c0-2.4-1.2-4.1-2.3-5.4-.2 1.4-.8 2.4-1.7 2.9.3-3.5-.4-7.2-1.5-9.7z"
       />
-      <path fill="#ffe29a" opacity="0.85" d="M12 13c-1.3 1.3-2 2.4-2 3.6a2 2 0 0 0 4 0c0-1.2-.7-2.3-2-3.6z" />
     </svg>
   )
 }

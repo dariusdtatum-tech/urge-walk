@@ -1,5 +1,9 @@
 /* Self-hosted fonts (SIL Open Font License, see assets/fonts/OFL-*.txt). Latin only; anything
-   else falls back to the system font. Nothing is loaded from a font CDN. */
+   else falls back to the system font. Nothing is loaded from a font CDN; the service worker
+   precaches every .woff2 so they work offline.
+   - Plus Jakarta Sans: body, buttons, chips, tabs, labels and small numbers.
+   - Cormorant Garamond: titles, the ring number, timers and journal text (one variable file, 300–700).
+   - Pinyon Script: decoration only, in exactly two places (Home tagline, "That's yours."). */
 @font-face {
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
@@ -11,98 +15,161 @@
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Nunito';
+  font-family: 'Cormorant Garamond';
   font-style: normal;
   font-display: swap;
-  font-weight: 200 1000;
-  src: url('./assets/fonts/nunito-latin-wght-normal.woff2') format('woff2-variations'),
-    url('./assets/fonts/nunito-latin-wght-normal.woff2') format('woff2');
+  font-weight: 300 700;
+  src: url('./assets/fonts/cormorant-garamond-latin-wght-normal.woff2') format('woff2-variations'),
+    url('./assets/fonts/cormorant-garamond-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('./assets/fonts/cormorant-garamond-latin-400-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Pinyon Script';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('./assets/fonts/pinyon-script-latin-400-normal.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Colors. Dark navy/teal by default: cyan for the rings, active tab and +; mint for main actions
-   and "passed"; amber for "kinda"; grey for "didn't pass". No red for outcomes. */
+/* Coastal palette (cream / sand / navy / sea glass), matching the Urge Walk site.
+   Light ("cream") is the default; dark ("coastal night") follows the phone.
+   Sea glass #a9cbc0 is for fills, rings, chart and badges only; as text on cream it's #3f7a6b.
+   No red for outcomes. Every text pair here is checked for WCAG AA in src/lib/contrast.test.js. */
 :root {
   --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-num: 'Nunito', ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-script: 'Pinyon Script', 'Snell Roundhand', cursive;
 
-  --bg: #07141a;
-  --bg-grad: radial-gradient(130% 70% at 50% -5%, #15363f 0%, #0b1f27 48%, #061118 100%);
-  --surface: #11252c;   /* sheets and dialogs */
-  --border: #24424c;
-  --card: rgba(24, 46, 54, 0.6);
-  --card-border: rgba(255, 255, 255, 0.085);
-  --glass: rgba(18, 36, 43, 0.62);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --inset: rgba(0, 0, 0, 0.22);
-  --hairline: rgba(255, 255, 255, 0.09);
-  --track: rgba(61, 228, 255, 0.13);
-  --empty-ring: rgba(255, 255, 255, 0.26);
-  --text: #eef6f7;
-  --text-soft: rgba(238, 246, 247, 0.84);
-  --muted: #93a8af;
-  --accent: #5eead4;      /* mint: main actions */
-  --mint-hi: #b4fbe8;
-  --cyan: #3de4ff;        /* rings, active tab, + */
-  --on-cyan: #04242c;
-  --link: #6fe3d3;
-  --link-cyan: #63d6f2;
-  --label-teal: #7fdccf;
-  --on-accent: #06221d;
-  --danger: #f28b82;      /* only for deleting things, never for outcomes */
-  --overlay: rgba(2, 8, 11, 0.62);
+  --bg: #faf7f1;
+  --bg-grad: linear-gradient(180deg, #faf7f1 0%, #f6f1e7 70%, #f1ebe0 100%);
+  --surface: #fdfbf7;   /* sheets and dialogs */
+  --border: #e4dccd;    /* decorative lines */
+  --field-border: #8d8778; /* inputs and controls: 3:1 against the card */
+  --card: #fdfbf7;
+  --card-border: #e4dccd;
+  --card-shadow: 0 18px 40px -28px rgba(20, 40, 75, 0.35);
+  --glass: rgba(253, 251, 247, 0.78);
+  --glass-border: rgba(36, 57, 92, 0.12);
+  --sand: #f1ebe0;      /* chips, insets */
+  --inset: #f1ebe0;
+  --hairline: #e4dccd;
+  --seg: #f1ebe0;
+  --seg-on: #fdfbf7;
+  --track: #e9e1d2;
+  --empty-ring: rgba(36, 57, 92, 0.28);
+  --text: #2b3445;      /* ink */
+  --text-soft: #3a4357;
+  --title: #24395c;     /* navy: titles and the ring number */
+  --muted: #6b7280;     /* on cream and cards only */
+  --muted-sand: #5b6270; /* muted text on sand */
+  --accent: #3f7a6b;    /* sea-text: links, Edit, kicker, accent words */
+  --ring-a: #5d9384;
+  --ring-b: #a9cbc0;
+  --ring-glow: rgba(93, 147, 132, 0.4);
+  --action: #24395c;    /* primary buttons and + */
+  --on-action: #faf7f1;
+  --tab-active: #24395c;
+  --badge: #a9cbc0;
+  --on-badge: #24395c;
+  --badge-next: #5d9384;
+  --urge-grad: radial-gradient(circle at 50% 35%, #fdfbf7 0%, #d7e8e1 45%, #a9cbc0 100%);
+  --urge-text: #24395c;
+  --urge-sub: #2c4266;
+  --urge-halo: rgba(169, 203, 192, 0.22);
+  --shadow: rgba(20, 40, 75, 0.35);
+  --danger: #b23a2e;    /* only for deleting things, never for outcomes */
+  --on-danger: #ffffff;
+  --overlay: rgba(36, 57, 92, 0.28);
+  --grab: #d9cfbd;
+  --wave-1: rgba(230, 216, 191, 0.55);
+  --wave-2: rgba(211, 230, 223, 0.55);
+  --wave-3: rgba(169, 203, 192, 0.45);
+  --foam: rgba(253, 251, 247, 0.9);
 
-  --res-yes: #5eead4;
-  --res-kinda: #e6b15a;
-  --res-no: #8f9ca6;
-  --res-no-text: #c3ccd2;
-  --res-skip: #5f6d78;
+  --res-yes: #3f7a6b;
+  --res-kinda: #85642a;
+  --res-kinda-dot: #c9a66b;
+  --res-no: #5b6270;
+  --res-no-text: #5b6270;
+  --res-skip: #9aa0aa;
 
   font-family: var(--font-ui);
   line-height: 1.5;
   color: var(--text);
-  background: var(--bg);
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
 }
 
-/* Lighter palette if the phone is in light mode */
-@media (prefers-color-scheme: light) {
+/* Coastal night: deep navy, sand-cream text, sea-glass accents */
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg: #eef5f6;
-    --bg-grad: radial-gradient(130% 70% at 50% -5%, #dcf1f3 0%, #eaf4f5 50%, #f3f7f8 100%);
-    --surface: #ffffff;
-    --border: #d3e2e6;
-    --card: rgba(255, 255, 255, 0.82);
-    --card-border: rgba(10, 50, 60, 0.09);
-    --glass: rgba(255, 255, 255, 0.72);
-    --glass-border: rgba(10, 50, 60, 0.1);
-    --inset: rgba(10, 50, 60, 0.05);
-    --hairline: rgba(10, 50, 60, 0.1);
-    --track: rgba(10, 158, 192, 0.14);
-    --empty-ring: rgba(10, 50, 60, 0.25);
-    --text: #0f2229;
-    --text-soft: rgba(15, 34, 41, 0.82);
-    --muted: #587078;
-    --accent: #13a58c;
-    --mint-hi: #4fd8bd;
-    --cyan: #0a9ec0;
-    --on-cyan: #ffffff;
-    --link: #0f8f7b;
-    --link-cyan: #0a87a6;
-    --label-teal: #0f8f7b;
-    --on-accent: #ffffff;
-    --danger: #c5362c;
-    --overlay: rgba(10, 20, 30, 0.35);
+    --bg: #0f1d33;
+    --bg-grad: radial-gradient(ellipse 90% 50% at 50% 20%, #1b3152 0%, transparent 70%),
+      linear-gradient(180deg, #132541 0%, #0f1d33 60%, #0c182b 100%);
+    --surface: #182b47;
+    --border: #2a3f60;
+    --field-border: #6b7d99;
+    --card: #182b47;
+    --card-border: #2a3f60;
+    --card-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.6);
+    --glass: rgba(24, 43, 71, 0.72);
+    --glass-border: rgba(243, 237, 226, 0.12);
+    --sand: #1d3150;
+    --inset: #1d3150;
+    --hairline: #2a3f60;
+    --seg: #132540;
+    --seg-on: #24395c;
+    --track: #22375a;
+    --empty-ring: rgba(243, 237, 226, 0.3);
+    --text: #f3ede2;
+    --text-soft: #e2dccf;
+    --title: #f3ede2;
+    --muted: #a7b0bf;
+    --muted-sand: #a7b0bf;
+    --accent: #a9cbc0;
+    --ring-a: #a9cbc0;
+    --ring-b: #d3e6df;
+    --ring-glow: rgba(169, 203, 192, 0.38);
+    --action: #a9cbc0;
+    --on-action: #0f1d33;
+    --tab-active: #a9cbc0;
+    --badge: #a9cbc0;
+    --on-badge: #0f1d33;
+    --badge-next: #a9cbc0;
+    --urge-grad: radial-gradient(circle at 50% 35%, #e9f2ee 0%, #c3dcd3 45%, #a9cbc0 100%);
+    --urge-text: #0f1d33;
+    --urge-sub: #1b3152;
+    --urge-halo: rgba(169, 203, 192, 0.14);
+    --shadow: rgba(0, 0, 0, 0.45);
+    --danger: #f2a297;
+    --on-danger: #0f1d33;
+    --overlay: rgba(5, 12, 24, 0.5);
+    --grab: #3a5072;
+    --wave-1: rgba(27, 49, 82, 0.7);
+    --wave-2: rgba(44, 66, 102, 0.6);
+    --wave-3: rgba(36, 57, 92, 0.55);
+    --foam: rgba(169, 203, 192, 0.35);
 
-    --res-yes: #11957f;
-    --res-kinda: #b07a14;
-    --res-no: #7b8a95;
-    --res-no-text: #55656f;
-    --res-skip: #a3b0b8;
-    color-scheme: light;
+    --res-yes: #a9cbc0;
+    --res-kinda: #d9bf8c;
+    --res-kinda-dot: #d9bf8c;
+    --res-no: #a7b0bf;
+    --res-no-text: #a7b0bf;
+    --res-skip: #6d7a8f;
+    color-scheme: dark;
   }
 }
 
@@ -110,9 +177,10 @@
 
 html, body, #root { height: 100%; margin: 0; }
 
+/* The page background lives on <html> only, so the waves (z-index -1) can sit between it and the content */
+html { background: var(--bg-grad), var(--bg); background-color: var(--bg); }
 body {
-  background: var(--bg-grad), var(--bg);
-  background-color: var(--bg);
+  background: transparent;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
 }

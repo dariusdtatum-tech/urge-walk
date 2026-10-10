@@ -23,8 +23,8 @@ function WeekChart({ buckets, counts, caption, dots = true }) {
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Urges walked, ${Math.round(total)} in this range`} data-max={max}>
         <defs>
           <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#3de4ff" stopOpacity="0.26" />
-            <stop offset="1" stopColor="#3de4ff" stopOpacity="0" />
+            <stop offset="0" className="chart-fill-a" />
+            <stop offset="1" className="chart-fill-b" />
           </linearGradient>
         </defs>
         {area && <path d={area} fill="url(#chart-fill)" />}
@@ -43,6 +43,7 @@ function WeekChart({ buckets, counts, caption, dots = true }) {
           let cls = 'chart-label'
           if (n > 7 && i === 0) cls += ' first'
           if (n > 7 && i === n - 1) cls += ' last'
+          if (n <= 7 && b.current) cls += ' today'
           return <span key={i} className={cls}>{b.showLabel ? b.label : ''}</span>
         })}
       </div>

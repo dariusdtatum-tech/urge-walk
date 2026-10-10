@@ -1,7 +1,7 @@
 // The Home ring: the hero tracker's clean days.
 // The arc shows progress through the current milestone segment only (e.g. 90 → 180 days).
 // On a milestone day it's full, and `celebrate` adds one slow cyan glow (none with reduced motion).
-function HeroRing({ name, days, caption, progress, celebrate = false, size = 214, stroke = 16 }) {
+function HeroRing({ name, days, caption, progress, celebrate = false, size = 206, stroke = 12 }) {
   const c = size / 2
   const r = (size - stroke) / 2 - 6 // room for the glow
   const circumference = 2 * Math.PI * r
@@ -22,17 +22,12 @@ function HeroRing({ name, days, caption, progress, celebrate = false, size = 214
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <defs>
           <linearGradient id="hero-arc" x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#3de4ff" />
-            <stop offset="0.6" stopColor="#4fe6ff" />
-            <stop offset="1" stopColor="#8ff3ff" />
+            {/* Theme colours (sea glass), see --ring-a / --ring-b in index.css */}
+            <stop offset="0" style={{ stopColor: 'var(--ring-b)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--ring-a)' }} />
           </linearGradient>
-          <filter id="hero-glow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="4" result="b" />
-            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
         </defs>
         <circle className="hero-track" cx={c} cy={c} r={r} strokeWidth={stroke} fill="none" />
-        <circle className="hero-inner" cx={c} cy={c} r={r - stroke / 2 - 12} />
         {p > 0 && (
           <circle
               className="hero-arc"
@@ -45,7 +40,6 @@ function HeroRing({ name, days, caption, progress, celebrate = false, size = 214
               strokeLinecap="round"
               strokeDasharray={`${arc} ${circumference}`}
               transform={`rotate(-90 ${c} ${c})`}
-              filter="url(#hero-glow)"
             />
         )}
       </svg>

@@ -11,8 +11,8 @@ function ProgressRing({ value, size = 252, stroke = 16, open = false, paused = f
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <defs>
           <linearGradient id="walk-arc" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#6ff0ff" />
-            <stop offset="1" stopColor="#2cc3e0" />
+            <stop offset="0" style={{ stopColor: 'var(--ring-b)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--ring-a)' }} />
           </linearGradient>
           <filter id="walk-glow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="4.5" result="b" />

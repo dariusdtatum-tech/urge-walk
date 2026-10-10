@@ -29,7 +29,7 @@ function WalkStart({ prefs, onChangePrefs, onStart, plusCount = 0 }) {
 
   return (
     <section className="walk-start">
-      <p className="walk-lead">Urges pass. Let’s walk while this one does.</p>
+      <p className="walk-lead"><span>Urges pass, like waves.</span> <span>Let’s walk while this one does.</span></p>
 
       <div className="urge-halo">
         <button className="urge-btn" ref={urgeRef} onClick={onStart}>

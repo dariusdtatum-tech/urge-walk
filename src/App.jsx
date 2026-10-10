@@ -7,6 +7,7 @@ import JournalTab from './components/JournalTab.jsx'
 import LogTab from './components/LogTab.jsx'
 import PageHeader from './components/PageHeader.jsx'
 import WalkTab from './components/WalkTab.jsx'
+import Waves from './components/Waves.jsx'
 import { loadActiveWalk } from './lib/walkStorage.js'
 
 // The four tabs in the floating bar.
@@ -89,6 +90,7 @@ function App() {
 
   return (
     <div className={inFocus ? 'app app-focus' : 'app'}>
+      <Waves />
       {toast && (
         <div className="toast" data-testid="toast" role="status" onClick={() => setToast('')}>
           {toast}
