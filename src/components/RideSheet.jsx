@@ -14,7 +14,9 @@ function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
   const [{ why, line, contact }] = useState(() => {
     const p = loadProfile()
     const lines = encouragementLines(p?.improve)
-    return { why: p?.why ?? '', line: lines[Math.floor(Math.random() * lines.length)], contact: trustedContact(p) }
+    // A line from the "more of" picks only (none without picks, so the default sheet stays short).
+    const line = p?.improve?.length ? lines[Math.floor(Math.random() * lines.length)] : ''
+    return { why: p?.why ?? '', line, contact: trustedContact(p) }
   })
 
   return (
@@ -30,7 +32,7 @@ function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
       >
         <div className="sheet-handle" aria-hidden="true" />
         <h2 id="ride-title" className="ride-title">Ride it out</h2>
-        {why ? <p className="why-quote ride-why" data-testid="ride-why">“{why}”</p> : <p className="ride-line" data-testid="ride-line">{line}</p>}
+        {why ? <p className="why-quote ride-why" data-testid="ride-why">“{why}”</p> : line && <p className="ride-line" data-testid="ride-line">{line}</p>}
         {!logging ? (
           <>
             <div className="ride-tiles">
