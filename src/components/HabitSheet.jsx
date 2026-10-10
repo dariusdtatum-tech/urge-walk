@@ -4,13 +4,13 @@ import { MAX_NAME_LENGTH } from '../lib/storage.js'
 import ConfirmDialog from './ConfirmDialog.jsx'
 
 // Bottom sheet for adding a new habit or editing an existing one.
-// In edit mode it also offers "Reset to today" and "Delete", each behind a confirmation.
-function HabitSheet({ habit, today, onSave, onDelete, onClose }) {
+// In edit mode it also offers "Start a new count" (the kind reset sheet) and "Delete" (confirmed).
+function HabitSheet({ habit, today, onSave, onDelete, onReset, onClose }) {
   const isEdit = Boolean(habit)
   const [name, setName] = useState(habit ? habit.name : '')
   const [startDate, setStartDate] = useState(habit ? habit.startDate : today)
   const [error, setError] = useState('')
-  const [confirm, setConfirm] = useState(null) // null | 'reset' | 'delete'
+  const [confirm, setConfirm] = useState(null) // null | 'delete'
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -67,8 +67,8 @@ function HabitSheet({ habit, today, onSave, onDelete, onClose }) {
 
         {isEdit && (
           <div className="sheet-danger">
-            <button type="button" className="btn btn-ghost" onClick={() => setConfirm('reset')}>
-              Reset to today
+            <button type="button" className="btn btn-ghost" onClick={onReset}>
+              Start a new count
             </button>
             <button type="button" className="btn btn-ghost btn-ghost-danger" onClick={() => setConfirm('delete')}>
               Delete
@@ -77,15 +77,6 @@ function HabitSheet({ habit, today, onSave, onDelete, onClose }) {
         )}
       </form>
 
-      {confirm === 'reset' && (
-        <ConfirmDialog
-          title="Reset to today?"
-          message={`"${habit.name}" will start again from day 0 today. That's okay — every day counts.`}
-          confirmLabel="Reset"
-          onCancel={() => setConfirm(null)}
-          onConfirm={() => onSave({ name: habit.name, startDate: today })}
-        />
-      )}
       {confirm === 'delete' && (
         <ConfirmDialog
           title="Delete this habit?"

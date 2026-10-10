@@ -8,6 +8,8 @@ import { earnedList, loadMilestones, saveMilestones } from '../lib/milestones.js
 import { useToday } from '../lib/useToday.js'
 import { lengthLabel, loadWalkPrefs, saveWalkPrefs } from '../lib/walkStorage.js'
 import AnswerSheet from './AnswerSheet.jsx'
+import Community from './Community.jsx'
+import { TimeBackCard } from './TimeBack.jsx'
 import { MilestonesList } from './Milestones.jsx'
 import PageHeader from './PageHeader.jsx'
 import { useTrackerEditor } from './useTrackerEditor.jsx'
@@ -42,6 +44,7 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
   const [showLengths, setShowLengths] = useState(false)
   const [profile, setProfile] = useState(() => loadProfile() || emptyProfile())
   const [answer, setAnswer] = useState(null) // which setup answer is being edited
+  const [showCommunity, setShowCommunity] = useState(false)
   const hero = heroHabit(habits)
   const earned = hero ? earnedList(milestones, hero.id).length : 0
 
@@ -50,9 +53,27 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
     saveWalkPrefs(next)
   }
 
+  function changeProfile(changes) {
+    const next = { ...profile, ...changes }
+    saveProfile(next)
+    setProfile(loadProfile() || next)
+  }
+
+  if (showCommunity) return <Community onBack={() => setShowCommunity(false)} />
+
   return (
     <div className="you">
       <PageHeader title="You" />
+      <button className="settings-row community-row" data-testid="community-row" onClick={() => setShowCommunity(true)}>
+        <span className="community-ic" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="3" /><circle cx="16.5" cy="10" r="2.5" /><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6M14.5 15.2c.6-.3 1.3-.4 2-.4 2.2 0 3.8 1.3 4.2 4" /></svg>
+        </span>
+        <span>
+          <span className="settings-row-title">Community</span>
+          <span className="settings-row-sub">You’re not alone. House rules, what’s inside, Discord.</span>
+        </span>
+        <span aria-hidden="true">›</span>
+      </button>
       {notice && (
         <div className="notice" role="status">
           <span>{notice}</span>
@@ -91,6 +112,8 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
         </button>
         {showLengths && <WalkLengthPicker prefs={prefs} onChangePrefs={changePrefs} />}
       </section>
+
+      <TimeBackCard profile={profile} hero={hero} today={today} onChange={changeProfile} />
 
       <section className="you-answers" aria-labelledby="answers-title">
         <h2 className="you-section" id="answers-title">Your answers</h2>

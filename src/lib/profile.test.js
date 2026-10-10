@@ -22,6 +22,7 @@ const FULL = {
   version: 1, onboardedAt: '2026-10-10T12:00:00.000Z', skipped: false, adultConfirmed: true, privacyAckAt: '2026-10-10T11:58:00.000Z',
   before: { daysPerWeek: 5, timesPerDay: 3 }, improve: ['calm', 'proud', 'control'], importance: 'very', identity: 'control',
   support: 'trusted', trustedName: 'Sam', trustedPhone: '+15551234567', why: 'To be there for my family',
+  timeBack: { hoursPerTime: 1, moneyPerTime: null },
 }
 
 describe('profile storage and validation', () => {

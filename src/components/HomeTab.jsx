@@ -8,7 +8,8 @@ import { isIOS } from '../lib/persist.js'
 import { identityLine, loadProfile, rideProminent } from '../lib/profile.js'
 import { useNow, useToday } from '../lib/useToday.js'
 import { loadActiveWalk, loadWalks } from '../lib/walkStorage.js'
-import HeroRing from './HeroRing.jsx'
+import HeroPager from './HeroPager.jsx'
+import NeverZero from './NeverZero.jsx'
 import { MilestoneRow, MilestoneSheet, MilestonesList } from './Milestones.jsx'
 import PageHeader from './PageHeader.jsx'
 import { useTrackerEditor } from './useTrackerEditor.jsx'
@@ -106,12 +107,7 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
       )}
 
       {hero ? (
-        <div className="hero-block">
-          <HeroRing name={hero.name} days={days} caption={since} progress={segment.progress} celebrate={segment.isToday} />
-          <p className="ring-label" data-testid="ring-label">
-            <b>{label.lead}</b><span>{label.rest}</span>
-          </p>
-        </div>
+        <HeroPager hero={hero} days={days} since={since} segment={segment} label={label} milestones={milestones} today={today} profile={profile} />
       ) : (
         <section className="empty">
           <div className="empty-icon" aria-hidden="true">🌅</div>
@@ -128,6 +124,8 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
           )}
         </section>
       )}
+
+      {hero && <NeverZero hero={hero} walks={walks} today={today} />}
 
       {(hero || walks.length > 0) && (
         <WalksCard walks={walks} range={range} onRange={handleRange} streak={hero ? days : null} now={now} since={allSince} />

@@ -1,6 +1,6 @@
 // Saves data in this device's localStorage. Nothing ever leaves the phone.
 // Each list is stored as { version: 1, <field>: [...] } under a versioned key.
-import { isValidISODate } from './cleanTime.js'
+import { isValidISODate, todayISO } from './cleanTime.js'
 
 export const HABITS_KEY = 'urgewalk.v1.habits'
 export const MAX_NAME_LENGTH = 60
@@ -82,6 +82,27 @@ export function writeObject(key, value, storage = globalThis.localStorage) {
 // ---------- Habits (clean-time tracker) ----------
 
 // Keep only well-formed habits; quietly drop anything broken.
+export const MAX_RESETS = 500
+
+export function sanitizeResets(list) {
+  if (!Array.isArray(list)) return []
+  return list
+    .filter((r) => r && typeof r === 'object' && isValidISODate(r.prevStartDate) && isValidISODate(r.startDate) && !Number.isNaN(Date.parse(r.at)))
+    .map((r) => ({
+      at: new Date(r.at).toISOString(),
+      prevStartDate: r.prevStartDate,
+      prevStartedAt: typeof r.prevStartedAt === 'string' && !Number.isNaN(Date.parse(r.prevStartedAt)) ? new Date(r.prevStartedAt).toISOString() : null,
+      startDate: r.startDate,
+    }))
+    .slice(-MAX_RESETS)
+}
+
+// startedAt is only kept if it falls on startDate (local), otherwise it's dropped.
+export function cleanStartedAt(startedAt, startDate) {
+  if (typeof startedAt !== 'string' || Number.isNaN(Date.parse(startedAt))) return null
+  return todayISO(new Date(startedAt)) === startDate ? new Date(startedAt).toISOString() : null
+}
+
 export function sanitizeHabits(list) {
   if (!Array.isArray(list)) return []
   return list
@@ -92,6 +113,9 @@ export function sanitizeHabits(list) {
       id: typeof h.id === 'string' && h.id ? h.id : makeId(),
       name: h.name.trim().slice(0, MAX_NAME_LENGTH),
       startDate: h.startDate,
+      // Optional (added with Never zero): when the count started, and past resets for Undo / the 30-day strip.
+      ...(cleanStartedAt(h.startedAt, h.startDate) ? { startedAt: cleanStartedAt(h.startedAt, h.startDate) } : {}),
+      ...(Array.isArray(h.resets) && sanitizeResets(h.resets).length ? { resets: sanitizeResets(h.resets) } : {}),
     }))
 }
 

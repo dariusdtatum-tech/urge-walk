@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { resetTracker, undoReset } from '../lib/homeIdeas.js'
+import { loadWalks } from '../lib/walkStorage.js'
 import { todayISO } from '../lib/cleanTime.js'
 import { makePrimary } from '../lib/homeStats.js'
 import { backfillTracker, loadMilestones, removeTracker } from '../lib/milestones.js'
 import { loadHabits, makeId, saveHabits } from '../lib/storage.js'
 import HabitSheet from './HabitSheet.jsx'
+import ResetSheet from './ResetSheet.jsx'
 import TrackerSheet from './TrackerSheet.jsx'
 
 // Editing trackers, shared by Home ("Edit") and the You tab, so both behave the same:
@@ -16,6 +19,13 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
   )
   // null, { mode: 'manage' }, { mode: 'add', from }, or { mode: 'edit', habit, from }
   const [sheet, setSheet] = useState(null)
+  // After a reset: { habitId, name } for the 8-second "History kept." toast with Undo.
+  const [undo, setUndo] = useState(null)
+  useEffect(() => {
+    if (!undo) return undefined
+    const t = setTimeout(() => setUndo(null), 8000)
+    return () => clearTimeout(t)
+  }, [undo])
 
   function update(next) {
     setHabits(next)
@@ -28,6 +38,8 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
       update([...habits, { id: makeId(), ...values }])
     } else {
       const habit = { ...sheet.habit, ...values }
+      // A hand-edited start date has no known start time.
+      if (values.startDate !== sheet.habit.startDate) delete habit.startedAt
       // A new start date: milestones it has already passed are earned quietly (no sheets).
       if (values.startDate !== sheet.habit.startDate) onMilestones(backfillTracker(loadMilestones(), habit, todayISO()))
       update(habits.map((h) => (h.id === sheet.habit.id ? habit : h)))
@@ -41,8 +53,38 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
     back()
   }
 
+  // Start a new count: history, milestones and the lifetime count are untouched.
+  function handleReset(startDate) {
+    const habit = habits.find((h) => h.id === sheet.habit.id)
+    const next = resetTracker(habit, startDate)
+    update(habits.map((h) => (h.id === habit.id ? next : h)))
+    setSheet(null)
+    setUndo({ habitId: habit.id })
+  }
+  // Undo puts the previous start date (and time) back exactly.
+  function handleUndo() {
+    update(habits.map((h) => (h.id === undo.habitId ? undoReset(h) : h)))
+    setUndo(null)
+  }
+
   const sheets = (
     <>
+      {sheet?.mode === 'reset' && (
+        <ResetSheet
+          habit={sheet.habit}
+          milestones={loadMilestones()}
+          lifetime={loadWalks().walks.length}
+          today={today}
+          onConfirm={handleReset}
+          onClose={() => setSheet({ mode: 'edit', habit: sheet.habit, from: sheet.from })}
+        />
+      )}
+      {undo && (
+        <div className="toast toast-undo" role="status" data-testid="reset-toast">
+          <span>New count started. History kept.</span>
+          <button type="button" className="toast-action" onClick={handleUndo}>Undo</button>
+        </div>
+      )}
       {sheet?.mode === 'manage' && (
         <TrackerSheet
           habits={habits}
@@ -61,6 +103,7 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
           today={today}
           onSave={handleSave}
           onDelete={handleDelete}
+          onReset={() => setSheet({ mode: 'reset', habit: sheet.habit, from: sheet.from })}
           onClose={back}
         />
       )}

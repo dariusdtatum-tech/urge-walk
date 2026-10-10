@@ -11,6 +11,7 @@
 //   support: 'private' | 'trusted' | 'community' | 'unsure' | null,    // 10
 //   trustedName, trustedPhone,                            // 10 follow-up ("Text <name>" on Ride it out)
 //   why: string,                                          // 11 -> Ride it out sheet, live walk, Breathe
+//   timeBack: { hoursPerTime: 0.25-12 (default 1), moneyPerTime: number | null (opt-in, off by default) },
 // }
 // Trackers from screens 03-04 live in the existing habits store.
 import { readObject, writeObject } from './storage.js'
@@ -99,6 +100,7 @@ export function emptyProfile() {
     version: 1, onboardedAt: null, skipped: false, adultConfirmed: false, privacyAckAt: null,
     before: { daysPerWeek: null, timesPerDay: null }, improve: [], importance: null, identity: null,
     support: null, trustedName: '', trustedPhone: '', why: '',
+    timeBack: { hoursPerTime: 1, moneyPerTime: null },
   }
 }
 
@@ -128,6 +130,9 @@ export function sanitizeProfile(raw) {
     p.support = null
   }
   p.why = cleanText(raw.why, MAX_WHY)
+  const tb = raw.timeBack && typeof raw.timeBack === 'object' ? raw.timeBack : {}
+  const num = (x, lo, hi) => (typeof x === 'number' && Number.isFinite(x) && x >= lo && x <= hi ? Math.round(x * 100) / 100 : null)
+  p.timeBack = { hoursPerTime: num(tb.hoursPerTime, 0.25, 12) ?? 1, moneyPerTime: num(tb.moneyPerTime, 0.01, 100000) }
   return p
 }
 

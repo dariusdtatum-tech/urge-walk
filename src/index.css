@@ -95,6 +95,11 @@
   --ob-soon-bg: #e6d8bf; --ob-soon: #24395c;
   --ob-check: #a9cbc0; --on-ob-check: #24395c;
   --error: #9b3b2f;
+  /* Home ideas */
+  --dot-off: #d6ccba; --dot-on: #24395c;   /* pager dots */
+  --nz-on: #a9cbc0; --nz-off: #8a919c;     /* 30-day strip: filled / hollow outline (3:1 on card) */
+  --toast-bg: #24395c; --toast-text: #faf7f1; --toast-act: #a9cbc0;
+  --cm-pill-bg: #e3efe9; --cm-pill: #24395c; --cm-soon-bg: #e6d8bf;
   --tile-alt: #a9cbc0;       /* Breathe tile */
   --on-tile-alt: #24395c;
   --badge: #a9cbc0;
@@ -175,6 +180,10 @@
     --ob-soon-bg: #3a4f6e; --ob-soon: #f3ede2;
     --ob-check: #a9cbc0; --on-ob-check: #0f1d33;
     --error: #f0a59a;
+    --dot-off: #2a3f60; --dot-on: #a9cbc0;
+    --nz-on: #a9cbc0; --nz-off: #6a80a0;
+    --toast-bg: #f3ede2; --toast-text: #0f1d33; --toast-act: #2f6658;
+    --cm-pill-bg: #24395c; --cm-pill: #f3ede2; --cm-soon-bg: #3a4f6e;
     --tile-alt: #24395c;
     --on-tile-alt: #f3ede2;
     --badge: #a9cbc0;

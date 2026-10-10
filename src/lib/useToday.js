@@ -40,3 +40,26 @@ export function useNow() {
 
   return now
 }
+
+// The current time, updated exactly on each minute boundary (for clean time: days and hours,
+// no seconds, so once a minute is plenty), and when the app comes back to the foreground.
+export function useMinuteNow() {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    let timer
+    const tick = () => {
+      setNow(Date.now())
+      timer = setTimeout(tick, 60_000 - (Date.now() % 60_000))
+    }
+    timer = setTimeout(tick, 60_000 - (Date.now() % 60_000))
+    const refresh = () => setNow(Date.now())
+    document.addEventListener('visibilitychange', refresh)
+    window.addEventListener('focus', refresh)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', refresh)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [])
+  return now
+}
