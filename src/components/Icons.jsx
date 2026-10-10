@@ -15,8 +15,9 @@ export function HomeIcon() {
 export function WalkIcon() {
   return (
     <svg {...base}>
-      <circle cx="13.6" cy="4.3" r="1.7" />
-      <path d="M12.6 7.6 11 13.6M11 13.6l-2.1 3.8L7.2 21M11 13.6l2.6 3v4.4M12.4 8.4 9.6 10.4l-1 2.8M12.4 8.4l2.2 2.8 2.6 1" />
+      {/* A gentle winding path with a small wave at its end */}
+      <path d="M6 20.5c3.2-1.6 3.8-4 1.6-5.6-2-1.5-1.3-3.6 1.8-4.6l5.4-1.6" />
+      <path d="M13.6 6.4c1.3-1.3 2.6-1.3 3.9 0s2.6 1.3 3.9 0" />
     </svg>
   )
 }
