@@ -4,14 +4,17 @@
 // {
 //   app: 'urge-walk', format: 1, exportedAt: ISO time,
 //   data: { habits: [...], walks: [...], journal: [...], walkPrefs: { choice, customMinutes },
-//           milestones: { trackers: { [habitId]: { earned, seen } } } }   <- optional (added later)
+//           milestones: { trackers: { [habitId]: { earned, seen } } },     <- optional (added later)
+//           profile: { onboarding answers } }                              <- optional (added later)
 // }
 // Older backups without `milestones` still import: the milestones already passed are then marked
 // earned quietly on the next open (no celebration sheets).
+// Older backups without `profile` still import: existing trackers mean onboarding is skipped.
 // A walk in progress and an unfinished journal draft are not included (they're temporary).
 import { todayISO } from './cleanTime.js'
 import { MILESTONES_KEY, loadMilestones, sanitizeMilestones, saveMilestones } from './milestones.js'
 import { DRAFT_KEY, JOURNAL_KEY, loadJournal, sanitizeEntries, saveJournal } from './journal.js'
+import { PROFILE_KEY, loadProfile, sanitizeProfile, saveProfile } from './profile.js'
 import { HABITS_KEY, loadHabits, readObject, sanitizeHabits, saveHabits, writeObject } from './storage.js'
 import {
   ACTIVE_WALK_KEY, WALKS_KEY, WALK_CHOICES, WALK_PREFS_KEY, loadWalkPrefs, loadWalks, sanitizeWalks,
@@ -29,7 +32,7 @@ export const NUDGE_AFTER_DAYS = 7
 const DAY_MS = 24 * 60 * 60 * 1000
 
 // Every key an import replaces (and the safety copy saves).
-const DATA_KEYS = [HABITS_KEY, WALKS_KEY, JOURNAL_KEY, WALK_PREFS_KEY, MILESTONES_KEY, ACTIVE_WALK_KEY, DRAFT_KEY]
+const DATA_KEYS = [HABITS_KEY, WALKS_KEY, JOURNAL_KEY, WALK_PREFS_KEY, MILESTONES_KEY, PROFILE_KEY, ACTIVE_WALK_KEY, DRAFT_KEY]
 
 // ---------- Export ----------
 
@@ -44,6 +47,7 @@ export function buildBackup(storage = globalThis.localStorage, now = Date.now())
       journal: loadJournal(storage).entries,
       walkPrefs: loadWalkPrefs(storage),
       milestones: { trackers: loadMilestones(storage).trackers },
+      ...(loadProfile(storage) ? { profile: loadProfile(storage) } : {}),
     },
   }
 }
@@ -118,6 +122,13 @@ export function validateBackup(text) {
     data.milestones = { trackers: Object.fromEntries(Object.entries(clean.trackers).filter(([id]) => ids.has(id))) }
   }
 
+  // Onboarding answers are optional too. Unknown values are dropped; a profile that isn't an object fails.
+  if (d.profile != null) {
+    const profile = sanitizeProfile(d.profile)
+    if (!profile) return fail(`${NOT_A_BACKUP} (Profile is damaged.)`)
+    data.profile = profile
+  }
+
   const backup = { app: APP_NAME, format: raw.format, exportedAt: raw.exportedAt, data }
   const summary = {
     habits: data.habits.length,
@@ -164,7 +175,9 @@ export function applyBackup(backup, storage = globalThis.localStorage, now = Dat
   const ok = saveHabits(habits, storage) && saveWalks(walks, storage) && saveJournal(journal, storage) &&
     saveWalkPrefs(walkPrefs, storage) &&
     // No milestone history in the file: clear it, so passed milestones are backfilled quietly on next open.
-    (backup.data.milestones ? saveMilestones(backup.data.milestones, storage) : writeObject(MILESTONES_KEY, null, storage))
+    (backup.data.milestones ? saveMilestones(backup.data.milestones, storage) : writeObject(MILESTONES_KEY, null, storage)) &&
+    // No profile in the file (older backup): clear it; the trackers then mean onboarding is skipped.
+    (backup.data.profile ? saveProfile(backup.data.profile, storage) : writeObject(PROFILE_KEY, null, storage))
   // The backup's data replaces any walk in progress or unfinished draft.
   writeObject(ACTIVE_WALK_KEY, null, storage)
   writeObject(DRAFT_KEY, null, storage)

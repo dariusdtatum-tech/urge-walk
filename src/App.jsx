@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import BackupScreen from './components/BackupScreen.jsx'
 import BreatheScreen from './components/BreatheScreen.jsx'
+import Onboarding from './components/Onboarding.jsx'
 import HomeTab from './components/HomeTab.jsx'
 import { HomeIcon, JournalIcon, LogIcon, WaveIcon, YouIcon } from './components/Icons.jsx'
 import JournalTab from './components/JournalTab.jsx'
@@ -12,6 +13,8 @@ import WalkTab from './components/WalkTab.jsx'
 import Waves from './components/Waves.jsx'
 import YouTab from './components/YouTab.jsx'
 import { BREATHE_SAVED_MESSAGES, LOGGED_SAVED_MESSAGE } from './lib/walkMessages.js'
+import { hasAnyData } from './lib/backup.js'
+import { resolveOnboarding } from './lib/profile.js'
 import { startWalkNow } from './lib/walkStart.js'
 import { appendWalk, buildBreatheRecord, buildLoggedRecord, lengthLabel, loadActiveWalk, loadWalkPrefs } from './lib/walkStorage.js'
 
@@ -45,6 +48,9 @@ function App() {
   // The Backup screen opens from Home or You; the tab bar stays the same
   const [showBackup, setShowBackup] = useState(false)
   const [showRide, setShowRide] = useState(false)
+  // Setup: 'new' on first run (no data, no profile), 'redo' from You, or null. Existing users skip it.
+  const [onboarding, setOnboarding] = useState(() => (resolveOnboarding({ hasData: hasAnyData() }) ? 'new' : null))
+  const [obBackup, setObBackup] = useState(false)
   const contentRef = useRef(null)
   const press = useRef({ timer: null, fired: false })
 
@@ -123,13 +129,13 @@ function App() {
   if (showBackup) {
     view = <BackupScreen onBack={() => setShowBackup(false)} backLabel={activeTab === 'you' ? 'You' : 'Home'} />
   } else if (activeTab === 'home') {
-    view = <HomeTab onUrge={() => { setFocus(true); goTo('walk') }} onOpenBackup={() => setShowBackup(true)} />
+    view = <HomeTab onUrge={() => { setFocus(true); goTo('walk') }} onOpenBackup={() => setShowBackup(true)} onRide={() => setShowRide(true)} />
   } else if (activeTab === 'walk') {
     view = <WalkTab onSaved={handleWalkSaved} onFocusChange={setFocus} onExit={exitWalk} />
   } else if (activeTab === 'breathe') {
     view = <BreatheScreen onSave={handleBreatheSaved} onCancel={() => goTo('home')} />
   } else if (activeTab === 'you') {
-    view = <YouTab onOpenBackup={() => setShowBackup(true)} />
+    view = <YouTab onOpenBackup={() => setShowBackup(true)} onRedo={() => setOnboarding('redo')} />
   } else if (activeTab === 'log') {
     view = (
       <>
@@ -158,6 +164,38 @@ function App() {
       <span className="tab-label">{label}</span>
     </button>
   )
+
+  // ---------- Setup (onboarding) ----------
+  if (onboarding && obBackup) {
+    return (
+      <div className="app">
+        <main className="content">
+          <BackupScreen
+            backLabel="Back"
+            onBack={() => setObBackup(false)}
+            onRestored={(message) => {
+              setObBackup(false)
+              // A restored backup with data (or a profile) goes straight to Home.
+              if (!resolveOnboarding({ hasData: hasAnyData() })) { setOnboarding(null); setToast(message); goTo('home') }
+            }}
+          />
+        </main>
+      </div>
+    )
+  }
+  if (onboarding) {
+    return (
+      <div className="app app-onboarding">
+        <Onboarding
+          key={onboarding}
+          mode={onboarding}
+          onRestore={() => setObBackup(true)}
+          onCancel={() => { setOnboarding(null); goTo('you') }}
+          onDone={() => { setOnboarding(null); goTo('home') }}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className={inFocus ? 'app app-focus' : 'app'}>

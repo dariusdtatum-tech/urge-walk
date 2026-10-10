@@ -11,7 +11,7 @@ const formatWhen = (iso) => new Date(iso).toLocaleString(undefined, {
 const formatDay = (iso) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 
 // Backup screen: export everything to a file, or restore from one.
-function BackupScreen({ onBack, backLabel = 'Home' }) {
+function BackupScreen({ onBack, backLabel = 'Home', onRestored }) {
   const [meta, setMeta] = useState(() => loadBackupMeta())
   const [undoInfo, setUndoInfo] = useState(() => getUndoInfo())
   const [message, setMessage] = useState(null) // { kind: 'ok' | 'error', text }
@@ -59,6 +59,7 @@ function BackupScreen({ onBack, backLabel = 'Home' }) {
     const { backup, summary } = pending
     setPending(null)
     if (applyBackup(backup)) {
+      if (onRestored) { onRestored(`Backup restored: ${summaryText(summary)}.`); return }
       setUndoInfo(getUndoInfo())
       setMessage({ kind: 'ok', text: `Backup restored: ${summaryText(summary)}.` })
     } else {

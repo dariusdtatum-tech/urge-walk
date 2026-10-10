@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useWakeLock } from '../lib/useWakeLock.js'
 import { breathPhase } from '../lib/breathe.js'
+import { encouragementLines } from '../lib/encouragement.js'
+import { loadProfile } from '../lib/profile.js'
 import { BREATHE_SECONDS } from '../lib/walkStorage.js'
 import WalkFinish from './WalkFinish.jsx'
 
@@ -9,6 +11,7 @@ import WalkFinish from './WalkFinish.jsx'
 // and only the words cross-fade. Then the same "Did the urge pass?" check-in as a walk.
 function BreatheScreen({ onSave, onCancel }) {
   const [startedAt] = useState(() => Date.now())
+  const [{ lines, why, offset }] = useState(() => { const p = loadProfile(); return { lines: encouragementLines(p?.improve), why: p?.why ?? '', offset: Math.floor(Math.random() * 100) } })
   const [now, setNow] = useState(startedAt)
   const [endedAt, setEndedAt] = useState(null)
   const elapsed = (endedAt ?? now) - startedAt
@@ -71,8 +74,10 @@ function BreatheScreen({ onSave, onCancel }) {
         <div className="breathe-words" aria-live="polite">
           <p key={phase} className="breathe-word" data-testid="breathe-word">{phase === 'in' ? 'Breathe in' : 'Breathe out'}</p>
         </div>
+        {why && <p className="why-quote breathe-why" data-testid="breathe-why">“{why}”</p>}
         <p className="breathe-count" data-testid="breathe-count" aria-label={`${left} seconds left`}>{mm}:{ss}</p>
       </div>
+      <p className="breathe-line" data-testid="breathe-line" aria-live="off">{lines[(offset + Math.floor(elapsed / 20000)) % lines.length]}</p>
       <button className="breathe-finish" onClick={() => (elapsed < 3000 ? onCancel() : setEndedAt(Date.now()))}>Finish</button>
     </section>
   )

@@ -82,6 +82,19 @@
   --on-action: #faf7f1;
   --tab-active: #24395c;
   --on-action-soft: #d6dbe5; /* secondary text on the action colour */
+  /* Onboarding */
+  --ob-sky-a: #f6efe3; --ob-sky-b: #efe5d3; --ob-sun: #f3e3c6;
+  --ob-w1: rgba(127, 174, 159, 0.6); --ob-w2: rgba(169, 203, 192, 0.85); --ob-w3: rgba(211, 230, 223, 0.9);
+  --ob-foam: rgba(253, 251, 247, 0.9); --ob-w4: rgba(230, 216, 191, 0.9);
+  --ob-track: #e4dccd; --ob-fill: #5d9384;
+  --ob-sel-row: #eef4f1;  /* picked list row (navy text on it) */
+  --ob-pic: #eef4f1;      /* icon circles */
+  --ob-ink-line: #c9bfae; /* pill / search borders */
+  --ob-radio: #9aa2ae;
+  --ob-mark: #e4dccd; --ob-mark-on: #a9cbc0;
+  --ob-soon-bg: #e6d8bf; --ob-soon: #24395c;
+  --ob-check: #a9cbc0; --on-ob-check: #24395c;
+  --error: #9b3b2f;
   --tile-alt: #a9cbc0;       /* Breathe tile */
   --on-tile-alt: #24395c;
   --badge: #a9cbc0;
@@ -150,6 +163,18 @@
     --on-action: #0f1d33;
     --tab-active: #a9cbc0;
     --on-action-soft: #1b3152;
+    --ob-sky-a: #1b3152; --ob-sky-b: #0f1d33; --ob-sun: rgba(239, 230, 212, 0.85);
+    --ob-w1: rgba(169, 203, 192, 0.25); --ob-w2: rgba(58, 90, 115, 0.7); --ob-w3: rgba(44, 66, 102, 0.85);
+    --ob-foam: rgba(169, 203, 192, 0.9); --ob-w4: rgba(36, 57, 92, 0.9);
+    --ob-track: #2a3f60; --ob-fill: #a9cbc0;
+    --ob-sel-row: #24395c;
+    --ob-pic: #24395c;
+    --ob-ink-line: #3a5070;
+    --ob-radio: #6e7a8e;
+    --ob-mark: #2a3f60; --ob-mark-on: #a9cbc0;
+    --ob-soon-bg: #3a4f6e; --ob-soon: #f3ede2;
+    --ob-check: #a9cbc0; --on-ob-check: #0f1d33;
+    --error: #f0a59a;
     --tile-alt: #24395c;
     --on-tile-alt: #f3ede2;
     --badge: #a9cbc0;

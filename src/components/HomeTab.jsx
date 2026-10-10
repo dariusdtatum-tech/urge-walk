@@ -5,6 +5,7 @@ import { cleanDays, heroHabit, loadRange, saveRange, shortDate } from '../lib/ho
 import { loadMilestones, ringLabel, ringSegment, saveMilestones, syncMilestones } from '../lib/milestones.js'
 import { loadJournal } from '../lib/journal.js'
 import { isIOS } from '../lib/persist.js'
+import { identityLine, loadProfile, rideProminent } from '../lib/profile.js'
 import { useNow, useToday } from '../lib/useToday.js'
 import { loadActiveWalk, loadWalks } from '../lib/walkStorage.js'
 import HeroRing from './HeroRing.jsx'
@@ -16,11 +17,12 @@ import WalksCard from './WalksCard.jsx'
 // Home: one ring for the main tracker (progress toward its next milestone), the "Your walks" card
 // (Week / Month / All time changes only the card) and the Milestones badge row.
 // Reaching a milestone shows one calm sheet, once per milestone per tracker.
-function HomeTab({ onUrge, onOpenBackup }) {
+function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
   const today = useToday()
   const now = useNow()
   // Load saved data once, when the tab first appears.
   const [walks] = useState(() => loadWalks().walks)
+  const [profile] = useState(() => loadProfile())
   // Trackers + the Edit sheets (shared with the You tab). Home adds { mode: 'milestones' } for the list.
   const editor = useTrackerEditor({ today, onOpenBackup, onMilestones: (next) => storeMilestones(next) })
   const { habits, notice, setNotice, sheet, setSheet } = editor
@@ -75,6 +77,7 @@ function HomeTab({ onUrge, onOpenBackup }) {
       <PageHeader
         title="Home"
         tagline="One day at a time."
+        subline={identityLine(profile)}
         action={<button className="header-link" onClick={() => setSheet({ mode: 'manage' })}>Edit</button>}
       />
 
@@ -90,6 +93,16 @@ function HomeTab({ onUrge, onOpenBackup }) {
           <span>Your walk is waiting</span>
           <span className="resume-walk-go">Back to your walk ›</span>
         </button>
+      )}
+
+      {rideProminent(profile) && !walkInProgress && (
+        <section className="ride-card" data-testid="ride-card" aria-label="Ride it out">
+          <div>
+            <p className="ride-card-title">Urge right now?</p>
+            <p className="ride-card-sub">Walk, breathe, or just log it.</p>
+          </div>
+          <button className="btn btn-primary ride-card-btn" onClick={onRide}>Ride it out</button>
+        </section>
       )}
 
       {hero ? (

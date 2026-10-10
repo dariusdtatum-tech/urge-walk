@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { WALK_MESSAGES } from '../lib/walkMessages.js'
+import { encouragementLines } from '../lib/encouragement.js'
+import { loadProfile } from '../lib/profile.js'
 import {
   EXTEND_MINUTES, canExtend, elapsedMs, formatClock, formatElapsed, isOpen, isPaused, messageIndex, progress,
   remainingMs,
@@ -15,7 +16,9 @@ function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend }) {
   const [confirming, setConfirming] = useState(false)
   const paused = isPaused(walk)
   const open = isOpen(walk)
-  const message = WALK_MESSAGES[messageIndex(walk, now, WALK_MESSAGES.length)]
+  // Encouragement follows the "more of" picks from setup; the why sits above it.
+  const [{ lines, why }] = useState(() => { const p = loadProfile(); return { lines: encouragementLines(p?.improve), why: p?.why ?? '' } })
+  const message = lines[messageIndex(walk, now, lines.length)]
   const walked = formatElapsed(elapsedMs(walk, now))
 
   const time = open ? walked : formatClock(remainingMs(walk, now))
@@ -31,6 +34,7 @@ function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend }) {
           <span className="countdown-mode" data-testid="walk-mode">{open ? 'Open' : `${walk.plannedMinutes} min`}</span>
         </ProgressRing>
 
+        {why && <p className="why-quote walk-why" data-testid="walk-why">“{why}”</p>}
         <p className="walk-message" aria-live="polite">{message}</p>
       </div>
 
