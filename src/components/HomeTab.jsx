@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react'
 import { dismissNudge, loadBackupMeta, shouldNudge } from '../lib/backup.js'
 import { todayISO } from '../lib/cleanTime.js'
-import { cleanDays, heroHabit, loadRange, makePrimary, saveRange, shortDate } from '../lib/homeStats.js'
-import {
-  backfillTracker, loadMilestones, removeTracker, ringLabel, ringSegment, saveMilestones, syncMilestones,
-} from '../lib/milestones.js'
+import { cleanDays, heroHabit, loadRange, saveRange, shortDate } from '../lib/homeStats.js'
+import { loadMilestones, ringLabel, ringSegment, saveMilestones, syncMilestones } from '../lib/milestones.js'
 import { loadJournal } from '../lib/journal.js'
 import { isIOS } from '../lib/persist.js'
-import { loadHabits, makeId, saveHabits } from '../lib/storage.js'
 import { useNow, useToday } from '../lib/useToday.js'
 import { loadActiveWalk, loadWalks } from '../lib/walkStorage.js'
-import HabitSheet from './HabitSheet.jsx'
 import HeroRing from './HeroRing.jsx'
 import { MilestoneRow, MilestoneSheet, MilestonesList } from './Milestones.jsx'
 import PageHeader from './PageHeader.jsx'
-import TrackerSheet from './TrackerSheet.jsx'
+import { useTrackerEditor } from './useTrackerEditor.jsx'
 import WalksCard from './WalksCard.jsx'
 
 // Home: one ring for the main tracker (progress toward its next milestone), the "Your walks" card
@@ -24,14 +20,10 @@ function HomeTab({ onUrge, onOpenBackup }) {
   const today = useToday()
   const now = useNow()
   // Load saved data once, when the tab first appears.
-  const [initial] = useState(() => ({ ...loadHabits(), walks: loadWalks().walks }))
-  const [habits, setHabits] = useState(initial.habits)
-  const walks = initial.walks
-  const [notice, setNotice] = useState(
-    initial.recovered ? 'Some saved data was damaged and couldn’t be read. A backup was kept on this phone.' : '',
-  )
-  // null = closed, { mode: 'manage' }, { mode: 'add', from }, { mode: 'edit', habit, from }, or { mode: 'milestones' }
-  const [sheet, setSheet] = useState(null)
+  const [walks] = useState(() => loadWalks().walks)
+  // Trackers + the Edit sheets (shared with the You tab). Home adds { mode: 'milestones' } for the list.
+  const editor = useTrackerEditor({ today, onOpenBackup, onMilestones: (next) => storeMilestones(next) })
+  const { habits, notice, setNotice, sheet, setSheet } = editor
   // Week / Month / All time: changes the walks card only, never the ring. Remembered.
   const [range, setRange] = useState(() => loadRange())
   const [milestones, setMilestones] = useState(() => loadMilestones())
@@ -41,13 +33,8 @@ function HomeTab({ onUrge, onOpenBackup }) {
   // Gentle backup reminder (data only lives on this phone)
   const [showNudge, setShowNudge] = useState(() => shouldNudge(
     loadBackupMeta(),
-    initial.habits.length > 0 || walks.length > 0 || loadJournal().entries.length > 0,
+    habits.length > 0 || walks.length > 0 || loadJournal().entries.length > 0,
   ))
-
-  function update(next) {
-    setHabits(next)
-    if (!saveHabits(next)) setNotice('Couldn’t save on this phone. Is private browsing on?')
-  }
 
   function storeMilestones(next) {
     saveMilestones(next)
@@ -65,28 +52,6 @@ function HomeTab({ onUrge, onOpenBackup }) {
     setMilestones(result.data)
     if (result.celebrate.length > 0) setCelebrations((q) => [...q, ...result.celebrate])
   }, [habits, today])
-
-  // After adding/editing from the Edit sheet, go back to it.
-  const back = () => setSheet(sheet?.from === 'manage' ? { mode: 'manage' } : null)
-
-  function handleSave(values) {
-    if (sheet.mode === 'add') {
-      update([...habits, { id: makeId(), ...values }])
-    } else {
-      const habit = { ...sheet.habit, ...values }
-      // A new start date: milestones it has already passed are earned quietly (no sheets).
-      // Earned milestones are never removed, so a reset keeps them.
-      if (values.startDate !== sheet.habit.startDate) storeMilestones(backfillTracker(loadMilestones(), habit, todayISO()))
-      update(habits.map((h) => (h.id === sheet.habit.id ? habit : h)))
-    }
-    back()
-  }
-
-  function handleDelete() {
-    storeMilestones(removeTracker(loadMilestones(), sheet.habit.id))
-    update(habits.filter((h) => h.id !== sheet.habit.id))
-    back()
-  }
 
   function handleRange(id) {
     setRange(id)
@@ -176,27 +141,7 @@ function HomeTab({ onUrge, onOpenBackup }) {
           onDone={() => setCelebrations((q) => q.slice(1))}
         />
       )}
-      {sheet?.mode === 'manage' && (
-        <TrackerSheet
-          habits={habits}
-          today={today}
-          onEdit={(habit) => setSheet({ mode: 'edit', habit, from: 'manage' })}
-          onAdd={() => setSheet({ mode: 'add', from: 'manage' })}
-          onMakePrimary={(id) => update(makePrimary(habits, id))}
-          onOpenBackup={() => { setSheet(null); onOpenBackup() }}
-          onClose={() => setSheet(null)}
-        />
-      )}
-      {(sheet?.mode === 'add' || sheet?.mode === 'edit') && (
-        <HabitSheet
-          key={sheet.mode === 'edit' ? sheet.habit.id : 'new'}
-          habit={sheet.mode === 'edit' ? sheet.habit : null}
-          today={today}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          onClose={back}
-        />
-      )}
+      {editor.sheets}
     </div>
   )
 }

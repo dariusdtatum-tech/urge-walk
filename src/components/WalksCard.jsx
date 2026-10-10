@@ -9,6 +9,9 @@ function WalksCard({ walks, range, onRange, streak, now, since }) {
   const buckets = rangeBuckets(range, now, since)
   const counts = bucketCounts(walks, buckets)
   const values = range === 'month' ? threeDayAverage(counts) : counts
+  // The chart counts every urge ridden out; say so once breathing or logged urges are in the mix.
+  const mixed = walks.some((w) => w.kind && w.kind !== 'walk')
+  const caption = mixed ? RANGES[range].captionAll : RANGES[range].caption
 
   return (
     <section className="walks-card" aria-labelledby="walks-title">
@@ -28,6 +31,7 @@ function WalksCard({ walks, range, onRange, streak, now, since }) {
         <div className="chip-stat" data-testid="chip-walked">
           <span className="stat-num">{stats.walked}</span>
           <span className="stat-label">Walked</span>
+          {stats.riddenOut > stats.walked && <span className="stat-sub" data-testid="chip-ridden">{stats.riddenOut} ridden out</span>}
         </div>
         <div className="chip-stat" data-testid="chip-passed">
           <span className="stat-num">{stats.passed}</span>
@@ -41,7 +45,7 @@ function WalksCard({ walks, range, onRange, streak, now, since }) {
         )}
       </div>
 
-      <WeekChart buckets={buckets} counts={values} caption={RANGES[range].caption} dots={range === 'week'} />
+      <WeekChart buckets={buckets} counts={values} caption={caption} dots={range === 'week'} />
     </section>
   )
 }

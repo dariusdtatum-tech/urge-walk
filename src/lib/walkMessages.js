@@ -20,3 +20,12 @@ export const SAVED_MESSAGES = {
   no: 'Thanks for walking anyway. Showing up is the hard part.',
   skip: 'Walk saved. Good job taking care of yourself.',
 }
+
+// After a minute of breathing or a "Just log it"
+export const BREATHE_SAVED_MESSAGES = {
+  yes: 'Nice work. You rode it out.',
+  kinda: 'Every breath helps. Glad you paused.',
+  no: 'Thanks for stopping to breathe. Showing up is the hard part.',
+  skip: 'Saved. Good job taking care of yourself.',
+}
+export const LOGGED_SAVED_MESSAGE = 'Saved. You rode one out.'

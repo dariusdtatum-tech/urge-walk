@@ -1,25 +1,20 @@
 import { useEffect, useState } from 'react'
 import { playChime, unlockAudio } from '../lib/chime.js'
-import { makeId } from '../lib/storage.js'
 import { useWakeLock } from '../lib/useWakeLock.js'
-import { SAVED_MESSAGES, WALK_MESSAGES } from '../lib/walkMessages.js'
+import { SAVED_MESSAGES } from '../lib/walkMessages.js'
+import { appendWalk, loadActiveWalk, saveActiveWalk } from '../lib/walkStorage.js'
 import {
-  appendWalk, loadActiveWalk, loadWalkPrefs, plannedMinutesFor, saveActiveWalk, saveWalkPrefs,
-} from '../lib/walkStorage.js'
-import {
-  buildWalkRecord, extendWalk, finishWalk, isEnded, isOpen, isPaused, isTimeUp, pauseWalk, resumeWalk, startWalk,
+  buildWalkRecord, extendWalk, finishWalk, isEnded, isOpen, isPaused, isTimeUp, pauseWalk, resumeWalk,
 } from '../lib/walkTimer.js'
 import PageHeader from './PageHeader.jsx'
 import WalkActive from './WalkActive.jsx'
 import WalkFinish from './WalkFinish.jsx'
-import WalkStart from './WalkStart.jsx'
 
-// Walk tab: start screen -> walk in progress -> finish screen.
+// The walk screen (not a tab any more): walk in progress -> finish screen.
 // The walk in progress is saved to the phone on every change, so closing the app
 // or locking the screen never loses it; the time is worked out from timestamps.
-function WalkTab({ onSaved, onFocusChange = () => {}, plusCount = 0 }) {
+function WalkTab({ onSaved, onFocusChange = () => {}, onExit = () => {} }) {
   const [walk, setWalk] = useState(() => loadActiveWalk())
-  const [prefs, setPrefs] = useState(() => loadWalkPrefs()) // { choice, customMinutes }
   const [now, setNow] = useState(() => Date.now())
 
   const walking = walk != null && !isEnded(walk) && !isPaused(walk)
@@ -63,35 +58,17 @@ function WalkTab({ onSaved, onFocusChange = () => {}, plusCount = 0 }) {
     }
   }, [walk, now])
 
-  function handleChangePrefs(next) {
-    setPrefs(next)
-    saveWalkPrefs(next)
-  }
-
-  function handleStart() {
-    unlockAudio() // must happen during the tap for iOS to allow the chime later
-    const t = Date.now()
-    setNow(t)
-    commit(startWalk(plannedMinutesFor(prefs), t, {
-      id: makeId(),
-      messageOffset: Math.floor(Math.random() * WALK_MESSAGES.length),
-    }))
-  }
-
   function handleSave({ result, note }, skipped = false) {
     appendWalk(buildWalkRecord(walk, skipped ? {} : { result, note }))
     commit(null)
     onSaved(SAVED_MESSAGES[skipped || !result ? 'skip' : result])
   }
 
-  if (!walk) {
-    return (
-      <>
-        <PageHeader title="Walk" />
-        <WalkStart prefs={prefs} onChangePrefs={handleChangePrefs} onStart={handleStart} plusCount={plusCount} />
-      </>
-    )
-  }
+  // Nothing to show (no walk saved): back to where we came from.
+  useEffect(() => {
+    if (!walk) onExit()
+  }, [walk, onExit])
+  if (!walk) return null
   if (isEnded(walk)) {
     return (
       <>

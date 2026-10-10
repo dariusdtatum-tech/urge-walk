@@ -76,6 +76,7 @@ describe('finishing', () => {
     expect(w.endedEarly).toBe(false)
     const r = buildWalkRecord(w, { result: 'yes', note: '  felt better  ' })
     expect(r).toEqual({
+      kind: 'walk',
       id: 'w1',
       startedAt: '2026-01-01T12:00:00.000Z',
       endedAt: '2026-01-01T12:10:00.000Z',
@@ -183,6 +184,7 @@ describe('open walk (counts up)', () => {
     expect(w.endedAt).toBe(T0 + 25 * MIN)
     expect(w.endedEarly).toBe(false)
     expect(buildWalkRecord(w, { result: 'yes', note: 'x' })).toEqual({
+      kind: 'walk',
       id: 'o1',
       startedAt: '2026-01-01T12:00:00.000Z',
       endedAt: '2026-01-01T12:25:00.000Z',

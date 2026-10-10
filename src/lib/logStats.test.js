@@ -20,11 +20,11 @@ describe('summarize', () => {
       walk('d', '2026-10-07T15:00:00Z', { result: null, actualSeconds: 30 }),
       walk('e', '2026-10-07T16:00:00Z'),
     ])
-    expect(s).toEqual({ total: 5, yes: 2, kinda: 1, no: 1, skipped: 1, totalSeconds: 2330, totalMinutes: 39 })
+    expect(s).toEqual({ total: 5, yes: 2, kinda: 1, no: 1, skipped: 1, totalSeconds: 2330, totalMinutes: 39, kinds: { walk: 5, breathe: 0, logged: 0 }, onlyWalks: true })
   })
 
   it('empty list', () => {
-    expect(summarize([])).toEqual({ total: 0, yes: 0, kinda: 0, no: 0, skipped: 0, totalSeconds: 0, totalMinutes: 0 })
+    expect(summarize([])).toEqual({ total: 0, yes: 0, kinda: 0, no: 0, skipped: 0, totalSeconds: 0, totalMinutes: 0, kinds: { walk: 0, breathe: 0, logged: 0 }, onlyWalks: true })
   })
 })
 
@@ -92,7 +92,7 @@ describe('editing and deleting', () => {
     const data = {}
     const s = { getItem: (k) => data[k] ?? null, setItem: (k, v) => { data[k] = v } }
     saveWalks(updateWalk(deleteWalk(list, 'a'), 'b', { result: 'no', note: 'hard one' }), s)
-    expect(loadWalks(s).walks).toEqual([{ ...list[1], mode: 'timed', result: 'no', note: 'hard one' }])
+    expect(loadWalks(s).walks).toEqual([{ ...list[1], kind: 'walk', mode: 'timed', result: 'no', note: 'hard one' }])
   })
 })
 

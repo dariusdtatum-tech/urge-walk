@@ -1128,6 +1128,135 @@
 .backup-top { flex-direction: column; align-items: flex-start; gap: 0; }
 .backup-top .back-btn { min-height: 36px; padding: 0 4px 0 0; }
 
+/* ---------- Tab bar: two tabs, the "Ride it out" button, two tabs ---------- */
+.tabbar { padding: 0 4px; }
+.tabbar .tabbar-tabs { grid-template-columns: 1fr 1fr 84px 1fr 1fr; align-items: stretch; height: 100%; }
+.tab-center-slot { position: relative; display: flex; justify-content: center; }
+.tab-ride {
+  position: relative;
+  width: 84px;
+  min-height: 64px;
+  border: none;
+  background: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+.tab-ride-circle {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  margin-left: -31px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--action);
+  color: var(--on-action);
+  box-shadow: 0 0 0 5px var(--bg), 0 12px 22px -8px var(--shadow);
+}
+.tab-ride:active .tab-ride-circle { transform: scale(0.95); }
+.tab-ride:focus-visible { outline: none; }
+.tab-ride:focus-visible .tab-ride-circle { outline: 3px solid var(--accent); outline-offset: 4px; }
+.tab-ride-label { margin-bottom: 7px; font-size: 10.5px; font-weight: 700; color: var(--title); white-space: nowrap; }
+.tab-label { font-size: 10.5px; }
+
+/* ---------- Ride it out sheet ---------- */
+.ride-sheet { gap: 0; padding: 12px 20px calc(env(safe-area-inset-bottom) + 30px); border-radius: 28px 28px 0 0; border-top: 0; box-shadow: 0 -20px 50px -20px var(--shadow); }
+.ride-sheet .sheet-handle { width: 38px; margin: 0 auto 14px; background: var(--grab); }
+.ride-title { margin: 4px 4px 14px; text-align: center; font-size: 28px !important; }
+.ride-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ride-tile {
+  height: 170px;
+  border: none;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: inherit;
+  cursor: pointer;
+}
+.ride-tile svg { width: 32px; height: 32px; }
+.ride-tile:active { transform: scale(0.98); }
+.ride-tile-name { font-family: var(--font-serif); font-size: 32px; font-weight: 600; line-height: 1; }
+.ride-tile-sub { font-size: 13px; font-weight: 600; }
+.ride-walk { background: var(--action); color: var(--on-action); }
+.ride-walk .ride-tile-sub { color: var(--on-action-soft); }
+.ride-breathe { background: var(--tile-alt); color: var(--on-tile-alt); }
+.ride-log-link {
+  align-self: center;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  cursor: pointer;
+}
+.ride-log { display: flex; flex-direction: column; gap: 14px; }
+.ride-log-lead { text-align: center; color: var(--muted); }
+
+/* ---------- Breathe (focus mode) ---------- */
+.breathe { flex: 1; display: flex; flex-direction: column; align-items: center; min-height: 0; }
+.breathe-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+.breathe-orb { position: relative; width: 280px; height: 280px; }
+.breathe-ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--card-border); }
+.breathe-guide { position: absolute; top: 50%; left: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 1px dashed var(--card-border); z-index: 1; }
+.breathe-halo, .breathe-pearl {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.577); /* r 60 of r 104 */
+}
+.breathe-halo { width: 240px; height: 240px; background: color-mix(in srgb, var(--ring-b) 25%, transparent); }
+.breathe-pearl { width: 208px; height: 208px; background: radial-gradient(circle, #fdfbf7 0%, #d7e8e1 60%, #a9cbc0 100%); }
+/* In over 4s (then hold 1s), out over 6s */
+.breathe-in .breathe-halo, .breathe-in .breathe-pearl { transform: translate(-50%, -50%) scale(1); transition: transform 4s ease-in-out; }
+.breathe-out .breathe-halo, .breathe-out .breathe-pearl { transform: translate(-50%, -50%) scale(0.577); transition: transform 6s ease-in-out; }
+.breathe-words { min-height: 44px; display: grid; place-items: center; }
+.breathe-word { font-family: var(--font-serif); font-size: 40px; font-weight: 600; line-height: 1.1; color: var(--title); animation: word-in 0.9s ease both; }
+@keyframes word-in { from { opacity: 0; } to { opacity: 1; } }
+.breathe-count { margin-top: -14px; font-family: var(--font-serif); font-size: 22px; font-weight: 600; color: var(--muted-sand); font-variant-numeric: lining-nums tabular-nums; }
+.breathe-finish {
+  min-height: 48px;
+  min-width: 120px;
+  margin-bottom: 10px;
+  border: none;
+  background: none;
+  color: var(--title);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.breathe-done { padding-top: 12px; }
+
+/* ---------- You ---------- */
+.you { display: flex; flex-direction: column; gap: 12px; }
+.you .page-header { margin-bottom: 4px; }
+.you .settings-row { background: var(--card); border-color: var(--card-border); }
+.you-card { display: flex; flex-direction: column; gap: 12px; padding-bottom: 4px; }
+.you-card .walk-options { margin-top: 0; }
+.you-footnote { margin-top: 8px; text-align: center; color: var(--muted); font-size: 0.85rem; }
+
+/* ---------- Log: what kind of record ---------- */
+.kind-tag { flex-shrink: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+
 /* ---------- Coastal waves (background motif) ---------- */
 /* z-index -1: behind every page element, above the page background. .content gets no stacking context,
    so sheets and dialogs still sit above the tab bar. */
@@ -1159,6 +1288,10 @@
   .hero-arc, .ring-open svg, .ring-open .ring-fill, .toast, .hero-celebrate::before { animation: none; }
   /* Waves stay still; cards appear without rising */
   .wave, .walks-card, .summary, .week-card, .backup-card, .empty { animation: none; }
+  /* Breathe: the circle stays still (mid size); only the words cross-fade */
+  .breathe-in .breathe-halo, .breathe-in .breathe-pearl, .breathe-out .breathe-halo, .breathe-out .breathe-pearl,
+  .breathe-halo, .breathe-pearl { transform: translate(-50%, -50%) scale(0.8); transition: none; }
+  .tab-ride:active .tab-ride-circle, .ride-tile:active { transform: none; }
   /* The milestone sheet fades in instead of sliding */
   .milestone-sheet { animation: fade-in 0.3s ease-out both; }
   .ring-open .ring-fill { opacity: 0.8; }

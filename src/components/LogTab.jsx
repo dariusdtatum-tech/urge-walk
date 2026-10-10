@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useToday } from '../lib/useToday.js'
 import {
-  OUTCOME_LABELS, deleteWalk, formatTimeOfDay, groupByDay, summarize, updateWalk, walkSummaryLabel, weekDays,
+  OUTCOME_LABELS, deleteWalk, kindOf, formatTimeOfDay, groupByDay, summarize, updateWalk, walkSummaryLabel, weekDays,
 } from '../lib/logStats.js'
 import { loadWalks, saveWalks } from '../lib/walkStorage.js'
 import ResultPill, { OutcomeMark } from './ResultPill.jsx'
@@ -53,9 +53,9 @@ function LogTab({ onGoToWalk, initialSelectedId = null }) {
         {noticeBox}
         <section className="empty">
           <div className="empty-icon" aria-hidden="true">🗒️</div>
-          <h2>No walks yet</h2>
-          <p>Next time an urge shows up, take a walk. Each one you finish will be saved here.</p>
-          <button className="btn btn-primary btn-big" onClick={onGoToWalk}>Go to Walk</button>
+          <h2>No urges logged yet</h2>
+          <p>Next time an urge shows up, ride it out: take a walk, breathe for a minute, or just log it. Each one is saved here.</p>
+          <button className="btn btn-primary btn-big" onClick={onGoToWalk}>Ride it out</button>
         </section>
       </div>
     )
@@ -72,11 +72,22 @@ function LogTab({ onGoToWalk, initialSelectedId = null }) {
       <section className="summary" aria-label="Summary">
         <p className="summary-big" data-testid="summary-total">
           <span className="summary-number">{s.total}</span>
-          {s.total === 1 ? ' urge walked off' : ' urges walked off'}
+          {s.onlyWalks
+            ? (s.total === 1 ? ' urge walked off' : ' urges walked off')
+            : (s.total === 1 ? ' urge ridden out' : ' urges ridden out')}
         </p>
         <p className="summary-sub" data-testid="summary-passed">
           {s.yes} passed · {s.totalMinutes} {s.totalMinutes === 1 ? 'minute' : 'minutes'} walked
         </p>
+        {!s.onlyWalks && (
+          <p className="summary-sub" data-testid="summary-kinds">
+            {[
+              `${s.kinds.walk} ${s.kinds.walk === 1 ? 'walk' : 'walks'}`,
+              s.kinds.breathe ? `${s.kinds.breathe} breathing` : null,
+              s.kinds.logged ? `${s.kinds.logged} logged` : null,
+            ].filter(Boolean).join(' · ')}
+          </p>
+        )}
         {/* One 4-up row, equal columns, never wraps */}
         <div className="outcome-row" data-testid="summary-counts">
           {[
@@ -120,7 +131,7 @@ function LogTab({ onGoToWalk, initialSelectedId = null }) {
           <ul className="log-list">
             {g.walks.map((w) => (
               <li key={w.id}>
-                <button className="log-entry log-walk" data-testid="log-entry" onClick={() => setSelectedId(w.id)}>
+                <button className="log-entry log-walk" data-testid="log-entry" data-kind={kindOf(w)} onClick={() => setSelectedId(w.id)}>
                   <OutcomeMark result={w.result} />
                   <div className="log-entry-main">
                     <div className="log-entry-top">

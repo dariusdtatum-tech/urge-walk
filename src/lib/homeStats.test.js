@@ -36,7 +36,7 @@ describe('clean days', () => {
     const habit = { startDate: '2026-04-27' }
     const before = cleanDays(habit, '2026-10-06')
     const walks = [walk('2026-10-06T12:00:00.000Z', 'no'), walk('2026-10-06T14:00:00.000Z', 'no')]
-    expect(rangeStats(walks, 'D', new Date(2026, 9, 6, 20).getTime())).toEqual({ walked: 2, passed: 0 })
+    expect(rangeStats(walks, 'D', new Date(2026, 9, 6, 20).getTime())).toEqual({ walked: 2, passed: 0, riddenOut: 2 })
     expect(cleanDays(habit, '2026-10-06')).toBe(before)
   })
 })
@@ -113,11 +113,11 @@ describe('chips and chart numbers', () => {
     walk('2025-12-31T03:00:00.000Z', null),
   ]
   it('Week: 3 walked, 1 passed', () => {
-    expect(rangeStats(walks, 'week', NOW)).toEqual({ walked: 3, passed: 1 })
+    expect(rangeStats(walks, 'week', NOW)).toEqual({ walked: 3, passed: 1, riddenOut: 3 })
   })
   it('Month and All time change only these numbers', () => {
-    expect(rangeStats(walks, 'month', NOW)).toEqual({ walked: 4, passed: 2 })
-    expect(rangeStats(walks, 'all', NOW)).toEqual({ walked: 5, passed: 2 })
+    expect(rangeStats(walks, 'month', NOW)).toEqual({ walked: 4, passed: 2, riddenOut: 4 })
+    expect(rangeStats(walks, 'all', NOW)).toEqual({ walked: 5, passed: 2, riddenOut: 5 })
   })
   it('weekly line: Fri-Tue 0, Wed 1, Thu 2', () => {
     expect(bucketCounts(walks, rangeBuckets('week', NOW))).toEqual([0, 0, 0, 0, 0, 1, 2])

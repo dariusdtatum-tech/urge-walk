@@ -11,7 +11,7 @@ const formatWhen = (iso) => new Date(iso).toLocaleString(undefined, {
 const formatDay = (iso) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 
 // Backup screen: export everything to a file, or restore from one.
-function BackupScreen({ onBack }) {
+function BackupScreen({ onBack, backLabel = 'Home' }) {
   const [meta, setMeta] = useState(() => loadBackupMeta())
   const [undoInfo, setUndoInfo] = useState(() => getUndoInfo())
   const [message, setMessage] = useState(null) // { kind: 'ok' | 'error', text }
@@ -79,7 +79,7 @@ function BackupScreen({ onBack }) {
   return (
     <div className="backup">
       <div className="backup-top">
-        <button className="btn btn-ghost back-btn" onClick={onBack}>‹ Home</button>
+        <button className="btn btn-ghost back-btn" onClick={onBack}>‹ {backLabel}</button>
         <h1 className="page-title">Backup</h1>
       </div>
 

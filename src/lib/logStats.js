@@ -1,16 +1,24 @@
 // Pure helpers for the Log tab: summary numbers, grouping by day, and edits.
 import { daysBetween, parseISODate, todayISO } from './cleanTime.js'
-import { MAX_NOTE_LENGTH, RESULTS } from './walkStorage.js'
+import { KINDS, MAX_NOTE_LENGTH, RESULTS } from './walkStorage.js'
+
+// Older records have no kind: they're walks.
+export const kindOf = (w) => (KINDS.includes(w?.kind) ? w.kind : 'walk')
+export const KIND_LABELS = { walk: 'Walk', breathe: 'Breathe', logged: 'Logged' }
 
 // Totals for the summary card.
+// total = every urge ridden out (all kinds); minutes count walking only.
 export function summarize(walks) {
-  const s = { total: walks.length, yes: 0, kinda: 0, no: 0, skipped: 0, totalSeconds: 0 }
+  const s = { total: walks.length, yes: 0, kinda: 0, no: 0, skipped: 0, totalSeconds: 0, kinds: { walk: 0, breathe: 0, logged: 0 } }
   for (const w of walks) {
+    const kind = kindOf(w)
+    s.kinds[kind] += 1
     if (RESULTS.includes(w.result)) s[w.result] += 1
     else s.skipped += 1
-    s.totalSeconds += w.actualSeconds
+    if (kind === 'walk') s.totalSeconds += w.actualSeconds
   }
   s.totalMinutes = Math.round(s.totalSeconds / 60)
+  s.onlyWalks = s.kinds.walk === s.total
   return s
 }
 
@@ -79,17 +87,23 @@ export function deleteWalk(walks, id) {
 
 // Short description for lists: "Open walk · 23 min" or "10 min walk".
 export function walkSummaryLabel(w) {
+  const kind = kindOf(w)
+  if (kind === 'logged') return 'Rode it out · logged'
+  if (kind === 'breathe') return `Breathed · ${formatDuration(w.actualSeconds)}`
   if (w.plannedMinutes == null) return `Open walk · ${formatDuration(w.actualSeconds)}`
   return `${formatDuration(w.actualSeconds)} walk`
 }
 
 // "Planned" field in the details sheet.
 export function plannedLabel(w) {
+  if (kindOf(w) === 'logged') return 'Just logged'
   return w.plannedMinutes == null ? 'No set time' : `${w.plannedMinutes} min`
 }
 
 // "Finished" field in the details sheet.
 export function finishedLabel(w) {
+  if (kindOf(w) === 'logged') return 'Rode it out'
+  if (kindOf(w) === 'breathe') return w.endedEarly ? 'Ended early' : 'Full minute'
   if (w.plannedMinutes == null) return 'Open walk'
   return w.endedEarly ? 'Ended early' : 'Full walk'
 }

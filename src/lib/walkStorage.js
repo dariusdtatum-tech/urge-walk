@@ -9,6 +9,10 @@ export const WALKS_KEY = 'urgewalk.v1.walks'
 export const ACTIVE_WALK_KEY = 'urgewalk.v1.activeWalk'
 export const WALK_PREFS_KEY = 'urgewalk.v1.walkPrefs'
 export const RESULTS = ['yes', 'kinda', 'no']
+// What kind of urge record: a walk, a minute of breathing, or an urge just logged as ridden out.
+// Records saved before kinds existed have no `kind` and are all walks.
+export const KINDS = ['walk', 'breathe', 'logged']
+export const BREATHE_SECONDS = 60
 export const MAX_NOTE_LENGTH = 280
 
 const isNum = (n) => typeof n === 'number' && Number.isFinite(n)
@@ -26,19 +30,47 @@ export function sanitizeWalks(list) {
     .filter((w) => isNum(w.actualSeconds) && w.actualSeconds >= 0)
     .map((w) => {
       // Older records have no `mode`; they were all timed walks.
-      const open = w.mode === 'open' || w.plannedMinutes == null
+      const kind = KINDS.includes(w.kind) ? w.kind : 'walk'
+      const open = kind === 'logged' || w.mode === 'open' || w.plannedMinutes == null
       return {
         id: typeof w.id === 'string' && w.id ? w.id : makeId(),
+        kind,
         startedAt: w.startedAt,
         endedAt: w.endedAt,
         mode: open ? 'open' : 'timed',
         plannedMinutes: open ? null : w.plannedMinutes,
-        actualSeconds: Math.round(w.actualSeconds),
+        actualSeconds: kind === 'logged' ? 0 : Math.round(w.actualSeconds),
         endedEarly: open ? false : Boolean(w.endedEarly),
         result: RESULTS.includes(w.result) ? w.result : null,
         note: typeof w.note === 'string' ? w.note.slice(0, MAX_NOTE_LENGTH) : '',
       }
     })
+}
+
+// A finished minute of breathing (`startedAt` / `endedAt` in ms).
+export function buildBreatheRecord({ id = makeId(), startedAt, endedAt, result = null, note = '' }) {
+  const actualSeconds = Math.max(0, Math.min(BREATHE_SECONDS, Math.round((endedAt - startedAt) / 1000)))
+  return {
+    id,
+    kind: 'breathe',
+    startedAt: new Date(startedAt).toISOString(),
+    endedAt: new Date(endedAt).toISOString(),
+    mode: 'timed',
+    plannedMinutes: BREATHE_SECONDS / 60,
+    actualSeconds,
+    endedEarly: actualSeconds < BREATHE_SECONDS,
+    result: RESULTS.includes(result) ? result : null,
+    note: String(note ?? '').trim().slice(0, MAX_NOTE_LENGTH),
+  }
+}
+
+// "Just log it": an urge ridden out without a walk or breathing, at `at` (ms). It passed, so result is 'yes'.
+export function buildLoggedRecord({ id = makeId(), at, note = '' }) {
+  const iso = new Date(at).toISOString()
+  return {
+    id, kind: 'logged', startedAt: iso, endedAt: iso, mode: 'open', plannedMinutes: null,
+    actualSeconds: 0, endedEarly: false, result: 'yes', note: String(note ?? '').trim().slice(0, MAX_NOTE_LENGTH),
+  }
 }
 
 // Returns { walks, recovered }. Oldest first.
@@ -109,4 +141,10 @@ export function plannedMinutesFor({ choice, customMinutes }) {
   if (choice === 'open') return null
   if (choice === 'custom') return clampCustomMinutes(customMinutes)
   return choice
+}
+
+// "20 min" / "Open" for the Walk tile and the You tab.
+export function lengthLabel({ choice, customMinutes }) {
+  if (choice === 'open') return 'Open walk'
+  return `${choice === 'custom' ? customMinutes : choice} min`
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { dayLabel, finishedLabel, formatDuration, formatTimeOfDay, localDayKey, plannedLabel } from '../lib/logStats.js'
+import { dayLabel, finishedLabel, kindOf, formatDuration, formatTimeOfDay, localDayKey, plannedLabel } from '../lib/logStats.js'
 import { todayISO } from '../lib/cleanTime.js'
 import { MAX_NOTE_LENGTH } from '../lib/walkStorage.js'
 import ConfirmDialog from './ConfirmDialog.jsx'
@@ -30,7 +30,7 @@ function WalkDetailSheet({ walk, onSave, onDelete, onClose }) {
         <h2 id="walk-detail-title">{day} · {formatTimeOfDay(walk.startedAt)}</h2>
 
         <dl className="detail-grid">
-          <div><dt>Walked</dt><dd>{formatDuration(walk.actualSeconds)}</dd></div>
+          <div><dt>{{ walk: 'Walked', breathe: 'Breathed', logged: 'Logged' }[kindOf(walk)]}</dt><dd>{kindOf(walk) === 'logged' ? 'Rode it out' : formatDuration(walk.actualSeconds)}</dd></div>
           <div><dt>Planned</dt><dd>{plannedLabel(walk)}</dd></div>
           <div><dt>Finished</dt><dd>{finishedLabel(walk)}</dd></div>
         </dl>
@@ -70,14 +70,14 @@ function WalkDetailSheet({ walk, onSave, onDelete, onClose }) {
 
         <div className="sheet-danger sheet-danger-end">
           <button type="button" className="btn btn-ghost btn-ghost-danger" onClick={() => setConfirmDelete(true)}>
-            Delete this walk
+            {kindOf(walk) === 'walk' ? 'Delete this walk' : 'Delete this entry'}
           </button>
         </div>
       </div>
 
       {confirmDelete && (
         <ConfirmDialog
-          title="Delete this walk?"
+          title={kindOf(walk) === 'walk' ? 'Delete this walk?' : 'Delete this entry?'}
           message="It will be removed from your log on this phone. This can’t be undone."
           confirmLabel="Delete"
           onCancel={() => setConfirmDelete(false)}

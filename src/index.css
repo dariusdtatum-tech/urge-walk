@@ -81,6 +81,9 @@
   --action: #24395c;    /* primary buttons and + */
   --on-action: #faf7f1;
   --tab-active: #24395c;
+  --on-action-soft: #d6dbe5; /* secondary text on the action colour */
+  --tile-alt: #a9cbc0;       /* Breathe tile */
+  --on-tile-alt: #24395c;
   --badge: #a9cbc0;
   --on-badge: #24395c;
   --badge-next: #5d9384;
@@ -146,6 +149,9 @@
     --action: #a9cbc0;
     --on-action: #0f1d33;
     --tab-active: #a9cbc0;
+    --on-action-soft: #1b3152;
+    --tile-alt: #24395c;
+    --on-tile-alt: #f3ede2;
     --badge: #a9cbc0;
     --on-badge: #0f1d33;
     --badge-next: #a9cbc0;

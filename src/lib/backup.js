@@ -121,7 +121,9 @@ export function validateBackup(text) {
   const backup = { app: APP_NAME, format: raw.format, exportedAt: raw.exportedAt, data }
   const summary = {
     habits: data.habits.length,
-    walks: data.walks.length,
+    walks: data.walks.filter((w) => w.kind === 'walk').length,
+    breathes: data.walks.filter((w) => w.kind === 'breathe').length,
+    logged: data.walks.filter((w) => w.kind === 'logged').length,
     journal: data.journal.length,
     exportedAt: raw.exportedAt,
     skipped,
@@ -131,10 +133,12 @@ export function validateBackup(text) {
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
-// "2 habits, 14 walks, 6 journal entries"
+// "2 habits, 14 walks, 6 journal entries" (breathing minutes and logged urges only when there are some)
 export function summaryText(s) {
   return [plural(s.habits, 'habit', 'habits'), plural(s.walks, 'walk', 'walks'),
-    plural(s.journal, 'journal entry', 'journal entries')].join(', ')
+    s.breathes ? plural(s.breathes, 'breathing minute', 'breathing minutes') : null,
+    s.logged ? plural(s.logged, 'logged urge', 'logged urges') : null,
+    plural(s.journal, 'journal entry', 'journal entries')].filter(Boolean).join(', ')
 }
 
 // ---------- Import (replace) with a safety copy + undo ----------

@@ -8,20 +8,22 @@ const CHOICES = [
   { id: 'no', label: 'No' },
 ]
 
-// After the walk: "Did the urge pass?", an optional note, then Save or Skip.
-function WalkFinish({ walk, onSave, onSkip }) {
+// After the walk (or a minute of breathing): "Did the urge pass?", an optional note, then Save or Skip.
+// `heading` / `sub` override the walk wording (the Breathe screen uses them).
+function WalkFinish({ walk, onSave, onSkip, heading: headingOverride, sub }) {
   const [result, setResult] = useState(null)
   const [note, setNote] = useState('')
-  const walked = formatElapsed(elapsedMs(walk, walk.endedAt))
+  const walked = walk ? formatElapsed(elapsedMs(walk, walk.endedAt)) : ''
   let heading = 'You did it.'
-  if (isOpen(walk)) heading = 'Nice walk.'
+  if (headingOverride) heading = headingOverride
+  else if (isOpen(walk)) heading = 'Nice walk.'
   else if (walk.endedEarly) heading = 'You took a break from the urge.'
 
   return (
     <section className="walk-finish">
       <div className="finish-icon" aria-hidden="true">🌿</div>
       <h2>{heading}</h2>
-      <p className="finish-sub">You walked for {walked}.</p>
+      <p className="finish-sub">{sub ?? `You walked for ${walked}.`}</p>
 
       <fieldset className="finish-question">
         <legend>Did the urge pass?</legend>

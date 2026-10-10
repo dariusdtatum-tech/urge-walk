@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { shortDate } from '../lib/homeStats.js'
+import { useSwipeDown } from '../lib/useSwipeDown.js'
 import { earnedList, milestoneName, milestoneRows, milestoneShort, nextUnearned } from '../lib/milestones.js'
 
 // Badge row under "Your walks": earned (filled mint) + the next one (faint dashed outline).
@@ -24,18 +25,6 @@ export function MilestoneRow({ data, habitId, onOpen }) {
 }
 
 // Swipe down (or tap outside) closes a bottom sheet.
-function useSwipeDown(onClose) {
-  const start = useRef(null)
-  return {
-    onTouchStart: (e) => { start.current = e.touches[0].clientY },
-    onTouchEnd: (e) => {
-      if (start.current != null && e.changedTouches[0].clientY - start.current > 60) onClose()
-      start.current = null
-    },
-  }
-}
-
-// The milestone moment: one calm sheet. Badge, name, days, "That's yours.", Done. Nothing else.
 export function MilestoneSheet({ milestone, habitName, showName, onDone }) {
   const swipe = useSwipeDown(onDone)
   const ref = useRef(null)

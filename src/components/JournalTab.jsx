@@ -4,7 +4,9 @@ import {
   newDraft, saveDraft, saveJournal,
 } from '../lib/journal.js'
 import { MOODS } from '../lib/journalContent.js'
-import { formatTimeOfDay, groupByDay, walkSummaryLabel } from '../lib/logStats.js'
+import { formatTimeOfDay, groupByDay, kindOf, walkSummaryLabel } from '../lib/logStats.js'
+
+const NOTE_TAGS = { walk: '🚶 Walk note', breathe: '🌬️ Breathe note', logged: '🌊 Urge note' }
 import { useToday } from '../lib/useToday.js'
 import { loadWalks } from '../lib/walkStorage.js'
 import JournalEditor from './JournalEditor.jsx'
@@ -148,7 +150,7 @@ function JournalTab({ onOpenWalk }) {
                   >
                     <div className="log-entry-top">
                       <span className="log-time">{formatTimeOfDay(item.time)}</span>
-                      <span className="log-minutes"><span className="tag tag-walk">🚶 Walk note</span></span>
+                      <span className="log-minutes"><span className="tag tag-walk" data-kind={kindOf(item.walk)}>{NOTE_TAGS[kindOf(item.walk)]}</span></span>
                       <ResultPill result={item.walk.result} />
                     </div>
                     <p className="log-note">{item.walk.note}</p>
@@ -160,7 +162,7 @@ function JournalTab({ onOpenWalk }) {
           </ul>
         </section>
       ))}
-      <p className="journal-footnote">Walk notes come from your Log. Tap one to edit it there.</p>
+      <p className="journal-footnote">Notes from walks, breathing and logged urges come from your Log. Tap one to edit it there.</p>
     </div>
   )
 }

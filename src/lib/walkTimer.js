@@ -128,6 +128,7 @@ export function buildWalkRecord(walk, { result = null, note = '' } = {}) {
   const open = isOpen(walk)
   return {
     id: walk.id,
+    kind: 'walk',
     startedAt: new Date(walk.startedAt).toISOString(),
     endedAt: new Date(walk.endedAt).toISOString(),
     mode: open ? 'open' : 'timed',

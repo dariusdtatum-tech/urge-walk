@@ -39,7 +39,7 @@ export function shortDate(iso, todayKey = todayISO()) {
 // These change only the card (Walked, Passed, chart). Clean days never depend on them.
 export const RANGES = {
   week: { id: 'week', name: 'Week' },
-  month: { id: 'month', name: 'Month', caption: '3-day avg · urges walked' },
+  month: { id: 'month', name: 'Month', caption: '3-day avg · urges walked', captionAll: '3-day avg · urges ridden out' },
   all: { id: 'all', name: 'All time' },
 }
 export const RANGE_IDS = ['week', 'month', 'all']
@@ -112,7 +112,8 @@ export function threeDayAverage(counts) {
   })
 }
 
-// Numbers for the Walked and Passed chips. All time counts every walk.
+// Numbers for the chips. walked = walks only; riddenOut = every urge record (walks, breathing, logged);
+// passed = any kind that passed. All time counts everything.
 export function rangeStats(walks, rangeId, now = Date.now()) {
   let from = -Infinity
   let to = Infinity
@@ -123,14 +124,16 @@ export function rangeStats(walks, rangeId, now = Date.now()) {
   }
   let walked = 0
   let passed = 0
+  let riddenOut = 0
   for (const w of walks) {
     const t = Date.parse(w.startedAt)
     if (t >= from && t < to) {
-      walked += 1
+      riddenOut += 1
+      if (w.kind == null || w.kind === 'walk') walked += 1
       if (w.result === 'yes') passed += 1
     }
   }
-  return { walked, passed }
+  return { walked, passed, riddenOut }
 }
 
 // Remembered card range (default Week).
