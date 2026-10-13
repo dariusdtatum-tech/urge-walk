@@ -32,8 +32,9 @@ export default defineConfig({
         background_color: '#faf7f1',
         theme_color: '#faf7f1',
         icons: [
-          { src: 'pwa-192-b.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512-b.png', sizes: '512x512', type: 'image/png' },
+          { src: 'apple-touch-icon-b.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-192-b.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512-b.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: 'pwa-maskable-512-b.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },

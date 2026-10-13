@@ -40,8 +40,13 @@ def save(img, name):
     print("wrote", name, img.size, img.mode)
 
 
-full = {s: opaque(render(SVG, s)) for s in (16, 32, 48, 64, 180, 192, 512)}
+full = {s: opaque(render(SVG, s)) for s in (16, 32, 48, 64, 120, 152, 167, 180, 192, 512)}
 save(full[180], "apple-touch-icon-b.png")
+for s in (120, 152, 167):
+    save(full[s], f"apple-touch-icon-{s}-b.png")
+# iOS also probes the conventional names next to the page; serve the current icon there too.
+save(full[180], "apple-touch-icon.png")
+save(full[180], "apple-touch-icon-precomposed.png")
 save(full[192], "pwa-192-b.png")
 save(full[512], "pwa-512-b.png")
 save(full[64], "favicon-64-b.png")
