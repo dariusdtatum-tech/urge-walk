@@ -5,7 +5,7 @@ import ConfirmDialog from './ConfirmDialog.jsx'
 
 // Bottom sheet for adding a new habit or editing an existing one.
 // In edit mode it also offers "Start a new count" (the kind reset sheet) and "Delete" (confirmed).
-function HabitSheet({ habit, today, onSave, onDelete, onReset, onClose }) {
+function HabitSheet({ habit, today, onSave, onDelete, onReset, undoable = null, onUndoReset = () => {}, onClose }) {
   const isEdit = Boolean(habit)
   const [name, setName] = useState(habit ? habit.name : '')
   const [startDate, setStartDate] = useState(habit ? habit.startDate : today)
@@ -65,6 +65,14 @@ function HabitSheet({ habit, today, onSave, onDelete, onReset, onClose }) {
           <button type="submit" className="btn btn-primary">{isEdit ? 'Save' : 'Add'}</button>
         </div>
 
+        {isEdit && undoable && (
+          <div className="undo-reset" data-testid="undo-reset">
+            <button type="button" className="btn btn-secondary" onClick={onUndoReset}>Undo last reset</button>
+            <span className="undo-reset-note">
+              Puts back your previous start date. Available until {new Date(undoable.until).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}.
+            </span>
+          </div>
+        )}
         {isEdit && (
           <div className="sheet-danger">
             <button type="button" className="btn btn-ghost" onClick={onReset}>

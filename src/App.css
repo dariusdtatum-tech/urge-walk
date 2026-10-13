@@ -1621,3 +1621,7 @@
 .crisis-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .crisis-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0 16px; text-decoration: none; font-size: 0.95rem; }
 .crisis-disclaimer { font-size: 0.85rem; color: var(--muted); text-align: center; }
+
+/* Undo last reset (24 h, in the tracker's edit sheet) */
+.undo-reset { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.undo-reset-note { font-size: 0.85rem; color: var(--muted); }

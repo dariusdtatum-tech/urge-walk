@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { resetTracker, undoReset } from '../lib/homeIdeas.js'
+import { resetTracker, undoReset, undoableReset } from '../lib/homeIdeas.js'
 import { loadWalks } from '../lib/walkStorage.js'
 import { todayISO } from '../lib/cleanTime.js'
 import { makePrimary } from '../lib/homeStats.js'
@@ -66,6 +66,14 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
     update(habits.map((h) => (h.id === undo.habitId ? undoReset(h) : h)))
     setUndo(null)
   }
+  // "Undo last reset" in the tracker's sheet, for 24 hours after the reset.
+  function handleUndoLast() {
+    const id = sheet.habit.id
+    const next = habits.map((h) => (h.id === id && undoableReset(h) ? undoReset(h) : h))
+    update(next)
+    setUndo(null)
+    setSheet(sheet.from === 'manage' ? { mode: 'manage' } : null)
+  }
 
   const sheets = (
     <>
@@ -104,6 +112,8 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
           onSave={handleSave}
           onDelete={handleDelete}
           onReset={() => setSheet({ mode: 'reset', habit: sheet.habit, from: sheet.from })}
+          undoable={sheet.mode === 'edit' ? undoableReset(habits.find((h) => h.id === sheet.habit.id)) : null}
+          onUndoReset={handleUndoLast}
           onClose={back}
         />
       )}

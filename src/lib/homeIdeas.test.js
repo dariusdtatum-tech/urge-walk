@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { applyBackup, buildBackup, validateBackup } from './backup.js'
 import {
   DAILY_LINES, MORE_OF_LINES, cleanCount, cleanRuns, cleanTime, cleanTimeLabel, dailyLine, dayNumber, last30,
-  lifetimeRidden, milestoneCards, msToNextMinute, resetTracker, sinceLabel, timeBack, undoReset,
+  lifetimeRidden, milestoneCards, msToNextMinute, resetTracker, sinceLabel, timeBack, undoReset, undoableReset, UNDO_WINDOW_MS,
 } from './homeIdeas.js'
 import { addDaysISO } from './milestones.js'
 import { sanitizeProfile } from './profile.js'
@@ -194,5 +194,27 @@ describe('time back', () => {
   })
   it('bad settings are cleaned', () => {
     expect(sanitizeProfile({ timeBack: { hoursPerTime: 99, moneyPerTime: -5 } }).timeBack).toEqual({ hoursPerTime: 1, moneyPerTime: null })
+  })
+})
+
+describe('undo last reset (24 hours)', () => {
+  const base = { id: 'a', name: 'G', startDate: '2030-01-01' }
+  const t0 = new Date('2030-02-10T15:00:00').getTime()
+  const r = resetTracker(base, '2030-02-10', t0)
+  it('is offered for 24 hours after the reset', () => {
+    expect(undoableReset(r, t0 + 60_000)).toEqual({ at: t0, until: t0 + UNDO_WINDOW_MS })
+    expect(undoableReset(r, t0 + UNDO_WINDOW_MS - 1)).not.toBe(null)
+    expect(undoableReset(r, t0 + UNDO_WINDOW_MS)).toBe(null)
+  })
+  it('survives a save/load round trip (stored with the tracker)', () => {
+    const storage = memoryStorage()
+    saveHabits([r], storage)
+    const [loaded] = loadHabits(storage).habits
+    expect(undoableReset(loaded, t0 + 3_600_000)).not.toBe(null)
+    expect(undoReset(loaded)).toEqual(base)
+  })
+  it('is not offered with no reset, or after the start date was edited by hand', () => {
+    expect(undoableReset(base, t0)).toBe(null)
+    expect(undoableReset({ ...r, startDate: '2030-02-05' }, t0 + 60_000)).toBe(null)
   })
 })

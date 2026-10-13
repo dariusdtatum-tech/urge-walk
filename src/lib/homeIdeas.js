@@ -136,6 +136,18 @@ export function undoReset(habit) {
   return out
 }
 
+// The last reset stays undoable for 24 hours (it lives in the tracker's saved resets, so it
+// survives closing the app), not just during the toast. Not offered once the start date was
+// edited by hand after the reset. Returns { at, until } (ms) or null.
+export const UNDO_WINDOW_MS = 24 * HOUR_MS
+export function undoableReset(habit, now = Date.now()) {
+  const last = sanitizeResets(habit?.resets).at(-1)
+  if (!last || last.startDate !== habit.startDate) return null
+  const at = Date.parse(last.at)
+  if (!Number.isFinite(at) || now < at || now - at >= UNDO_WINDOW_MS) return null
+  return { at, until: at + UNDO_WINDOW_MS }
+}
+
 // ---------- Daily line ----------
 // About 40 short lines in our voice: no famous quotes, no exclamation marks.
 export const DAILY_LINES = [
