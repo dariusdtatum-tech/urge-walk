@@ -1,4 +1,4 @@
-// The rotating encouragement lines (live walk, Breathe and the Ride it out sheet).
+// The rotating encouragement lines (live walk and Breathe).
 // The "more of" picks from onboarding (up to 3) choose which lines rotate; with no picks,
 // the general walk lines are used. A few general lines always stay in the mix.
 import { WALK_MESSAGES } from './walkMessages.js'

@@ -1437,16 +1437,16 @@
 /* ---------- What setup answers power ---------- */
 .page-subline { margin-top: 2px; font-size: 14px; font-weight: 600; color: var(--muted); }
 .why-quote { font-family: var(--font-serif); font-style: italic; font-weight: 600; color: var(--title); text-align: center; line-height: 1.3; }
-.ride-why, .ride-line { margin: -6px 8px 14px; text-align: center; }
+.ride-why { margin: -6px 8px 14px; text-align: center; }
 .ride-why { font-size: 18px; }
-.ride-line { font-size: 14px; color: var(--muted); font-weight: 500; }
 .walk-why { font-size: 18px; max-width: 300px; margin: 0 auto 10px; }
 .breathe-why { font-size: 17px; max-width: 290px; margin-top: -6px; }
 .breathe-line { max-width: 300px; margin: 0 auto 4px; text-align: center; font-size: 14px; color: var(--muted-sand); font-weight: 500; min-height: 2.6em; }
 .ride-text {
-  align-self: center; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; margin-top: 12px; padding: 0 20px;
-  border-radius: 999px; border: 1.5px solid var(--ob-ink-line); background: var(--card); color: var(--title);
-  font-size: 15px; font-weight: 700; text-decoration: none;
+  /* a quiet text link under the tiles, not a button */
+  align-self: center; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 6px; padding: 0 8px;
+  background: none; border: none; color: var(--accent);
+  font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
 }
 .ride-card {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 10px; padding: 14px 14px 14px 18px;
@@ -1606,3 +1606,6 @@
 /* Home scrolls now (Never zero, daily line): extra room at the end so the last row, scrolled to the
    bottom, sits >=16px above the wave crest (waves are 165px tall). */
 .content:has(> .home) { padding-bottom: calc(env(safe-area-inset-bottom) + 182px); }
+
+/* Onboarding: the two "before" steppers on one screen */
+.ob-before { display: flex; flex-direction: column; gap: 22px; }

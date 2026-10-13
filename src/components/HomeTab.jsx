@@ -10,7 +10,7 @@ import { useNow, useToday } from '../lib/useToday.js'
 import { loadActiveWalk, loadWalks } from '../lib/walkStorage.js'
 import HeroPager from './HeroPager.jsx'
 import NeverZero from './NeverZero.jsx'
-import { MilestoneRow, MilestoneSheet, MilestonesList } from './Milestones.jsx'
+import { MilestoneSheet, MilestonesList } from './Milestones.jsx'
 import PageHeader from './PageHeader.jsx'
 import { useTrackerEditor } from './useTrackerEditor.jsx'
 import WalksCard from './WalksCard.jsx'
@@ -131,7 +131,6 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
         <WalksCard walks={walks} range={range} onRange={handleRange} streak={hero ? days : null} now={now} since={allSince} />
       )}
 
-      {hero && <MilestoneRow data={milestones} habitId={hero.id} onOpen={() => setSheet({ mode: 'milestones' })} />}
 
       {showNudge && (
         <div className="nudge" data-testid="backup-nudge">

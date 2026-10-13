@@ -11,7 +11,11 @@ import {
   DateStep, IdentityStep, ImportanceStep, ImproveStep, RidingStep, StepperStep, SupportStep, WhyStep,
 } from './OnboardingSteps.jsx'
 
-const TOTAL = 12
+// Step ids (kept stable for the recap); 6 is gone — "times a day" now sits on screen 5 with "days a week".
+const ORDER = [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12]
+const TOTAL = ORDER.length
+const nextStep = (s) => ORDER[Math.min(ORDER.length - 1, ORDER.indexOf(s) + 1)]
+const prevStep = (s) => ORDER[Math.max(0, ORDER.indexOf(s) - 1)]
 const line = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }
 const PRIVACY = [
   { id: 'account', title: 'No account', text: 'Nothing to sign up for. No email, no password.', icon: <svg {...line}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6" /><path d="M4 4l16 16" /></svg> },
@@ -49,7 +53,7 @@ function WelcomeScene() {
   )
 }
 
-// 12 screens, one question each. mode 'new' (first run) or 'redo' (from You; answers prefilled,
+// 11 screens, one question each (the two "before" steppers share one). mode 'new' (first run) or 'redo' (from You; answers prefilled,
 // trackers that already exist are kept and not duplicated). Nothing is saved until "Let's walk".
 function Onboarding({ mode = 'new', onDone, onRestore, onCancel }) {
   const today = todayISO()
@@ -72,15 +76,15 @@ function Onboarding({ mode = 'new', onDone, onRestore, onCancel }) {
   const set = (changes) => setDraft((d) => ({ ...d, ...changes }))
   const newPicks = draft.picks.filter((n) => !draft.existing.some((e) => e.toLowerCase() === n.toLowerCase()))
 
-  const next = () => { setStep(fromRecap ? 12 : step + 1); if (fromRecap) setFromRecap(false) }
+  const next = () => { setStep(fromRecap ? 12 : nextStep(step)); if (fromRecap) setFromRecap(false) }
   const back = () => {
     if (fromRecap) { setFromRecap(false); setStep(12); return }
     if (step === 1 || (mode === 'redo' && step === 2)) { onCancel?.(); return }
-    setStep(step - 1)
+    setStep(prevStep(step))
   }
   // Skip keeps the default (date = today) or leaves the answer empty.
   const SKIP_RESET = {
-    4: { startDate: today }, 5: { daysPerWeek: null }, 6: { timesPerDay: null }, 7: { improve: [] },
+    4: { startDate: today }, 5: { daysPerWeek: null, timesPerDay: null }, 7: { improve: [] },
     8: { importance: null }, 9: { identity: null }, 10: { support: { support: null, trustedName: '', trustedPhone: '' } }, 11: { why: '' },
   }
   const skip = () => { set(SKIP_RESET[step]); next() }
@@ -134,10 +138,13 @@ function Onboarding({ mode = 'new', onDone, onRestore, onCancel }) {
       body: <RidingStep picks={draft.picks} onChange={(picks) => set({ picks })} /> },
     4: { title: 'When did your clean days begin?', sub: dateNote, extra: <button type="button" className="ob-link" onClick={() => set({ startDate: today })}>Start today</button>,
       body: <DateStep value={draft.startDate} today={today} onChange={(startDate) => set({ startDate })} /> },
-    5: { title: 'Before you started, how many days a week?', sub: 'Optional. Helps show the time you’ve gained back.',
-      body: <StepperStep testId="ob-dpw" value={draft.daysPerWeek} min={0} max={7} unit="days a week" marks={['M', 'T', 'W', 'T', 'F', 'S', 'S']} onChange={(daysPerWeek) => set({ daysPerWeek })} /> },
-    6: { title: 'On those days, how many times a day?', sub: 'Optional. A rough guess is fine.',
-      body: <StepperStep testId="ob-tpd" value={draft.timesPerDay} min={1} max={7} unit="times a day" marks={['1', '2', '3', '4', '5', '6', '7+']} onChange={(timesPerDay) => set({ timesPerDay })} /> },
+    5: { title: 'Before you started, how often?', sub: 'Optional. A rough guess is fine. Helps show the time you’ve gained back.', scroll: true,
+      body: (
+        <div className="ob-before">
+          <StepperStep testId="ob-dpw" value={draft.daysPerWeek} min={0} max={7} unit="days a week" marks={['M', 'T', 'W', 'T', 'F', 'S', 'S']} onChange={(daysPerWeek) => set({ daysPerWeek })} />
+          <StepperStep testId="ob-tpd" value={draft.timesPerDay} min={1} max={7} unit="times a day" marks={['1', '2', '3', '4', '5', '6', '7+']} onChange={(timesPerDay) => set({ timesPerDay })} />
+        </div>
+      ) },
     7: { title: 'What do you want more of?', sub: 'We’ll shape your walk encouragement around these.',
       body: <ImproveStep value={draft.improve} onChange={(improve) => set({ improve })} /> },
     8: { title: 'How important is this to you right now?', sub: 'Be honest. It only changes how the app shows up for you.',
@@ -189,8 +196,8 @@ function Onboarding({ mode = 'new', onDone, onRestore, onCancel }) {
       <button type="button" className="ob-back" aria-label="Back" onClick={back}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
       </button>
-      <div className="ob-pbar" role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={TOTAL} aria-valuenow={step}>
-        <i style={{ width: `${(step / TOTAL) * 100}%` }} />
+      <div className="ob-pbar" role="progressbar" aria-label="Setup progress" aria-valuemin={1} aria-valuemax={TOTAL} aria-valuenow={ORDER.indexOf(step) + 1}>
+        <i style={{ width: `${((ORDER.indexOf(step) + 1) / TOTAL) * 100}%` }} />
       </div>
       {step >= 4 && step <= 11 ? <button type="button" className="ob-skip" onClick={skip}>Skip</button> : <span className="ob-skip-space" />}
     </div>
