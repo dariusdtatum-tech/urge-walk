@@ -99,9 +99,9 @@ describe('reset and undo', () => {
 })
 
 describe('clean time', () => {
-  it('days and hours only, from the start moment', () => {
+  it('calendar days (same as the ring) plus hours so far today', () => {
     const h = { startDate: '2026-04-27', startedAt: new Date('2026-04-27T23:40:00').toISOString() }
-    expect(cleanTime(h, at('2026-10-10T09:41:30'))).toEqual({ days: 165, hours: 10 })
+    expect(cleanTime(h, at('2026-10-10T09:41:30'))).toEqual({ days: 166, hours: 9 })
     expect(cleanTimeLabel({ days: 1, hours: 1 })).toBe('1 day, 1 hour clean')
   })
   it('without a start time the count starts at local midnight', () => {

@@ -1,6 +1,6 @@
 // Pure helpers for the Home ideas: clean time (ring page 2), Never zero (lifetime total,
 // 30-day strip, kind resets with undo), the daily line and the Time back estimate.
-import { daysBetween, parseISODate, todayISO } from './cleanTime.js'
+import { cleanDayCount, daysBetween, parseISODate, todayISO } from './cleanTime.js'
 import { addDaysISO, earnedList, milestoneName, milestoneShort, ringSegment } from './milestones.js'
 import { IMPROVE } from './profile.js'
 
@@ -21,9 +21,15 @@ export const startMs = (habit) => (habit.startedAt ? Date.parse(habit.startedAt)
 
 // ---------- Clean time (page 2) ----------
 // Days and hours only, no seconds. "165 days, 9 hours".
+// days: the shared calendar-day count (same number as the ring). hours: hours so far today,
+// counted from local midnight, or from the start moment if the count started today.
 export function cleanTime(habit, now = Date.now()) {
-  const ms = Math.max(0, now - startMs(habit))
-  return { days: Math.floor(ms / DAY_MS), hours: Math.floor((ms % DAY_MS) / HOUR_MS) }
+  const d = new Date(now)
+  const today = todayISO(d)
+  const days = cleanDayCount(habit.startDate, today)
+  const midnight = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const from = Math.max(midnight, startMs(habit))
+  return { days, hours: Math.max(0, Math.floor((now - from) / HOUR_MS)) }
 }
 export const cleanTimeLabel = ({ days, hours }) =>
   `${days} ${days === 1 ? 'day' : 'days'}, ${hours} ${hours === 1 ? 'hour' : 'hours'} clean`
@@ -44,7 +50,7 @@ const dayDate = (iso) => { const p = parseISODate(iso); return new Date(p.y, p.m
 // last: the milestone this count last reached (date = start + days); before the first one of this
 // count, the most recent one earned earlier (kept after a reset); null if none yet.
 export function milestoneCards(habit, milestones, today = todayISO()) {
-  const days = Math.max(0, daysBetween(habit.startDate, today))
+  const days = cleanDayCount(habit.startDate, today)
   const seg = ringSegment(days)
   const reachedNow = seg.isToday ? seg.next : seg.prev
   let last = null

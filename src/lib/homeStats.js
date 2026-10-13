@@ -1,6 +1,6 @@
 // Pure helpers for the Home screen: the hero tracker, the D / W / M ranges,
 // the stat chips and the "urges walked" line chart. No React here.
-import { daysBetween, parseISODate, todayISO } from './cleanTime.js'
+import { cleanDayCount, parseISODate, todayISO } from './cleanTime.js'
 
 // The tracker shown in the Home ring is the first one in the list.
 // "Show on Home" (in Edit) moves a tracker to the front, so no extra setting is stored.
@@ -18,9 +18,7 @@ export function makePrimary(habits, id) {
 // Clean days for a habit. Comes only from its start date: walks (including
 // "Didn't pass") never change it. A start date in the future counts as 0.
 export function cleanDays(habit, todayKey = todayISO()) {
-  if (!habit) return 0
-  const days = daysBetween(habit.startDate, todayKey)
-  return Number.isFinite(days) && days > 0 ? days : 0
+  return habit ? cleanDayCount(habit.startDate, todayKey) : 0
 }
 
 // "Mar 15" this year, "Mar 15, 2025" for other years.

@@ -9,7 +9,8 @@ function HeroPager({ hero, days, since, segment, label, milestones, today, profi
   const [page, setPage] = useState(0)
   const track = useRef(null)
   const now = useMinuteNow()
-  const ct = cleanTime(hero, now)
+  // Same day number as the ring (both from cleanDayCount); page 2 only adds the hours.
+  const ct = { ...cleanTime(hero, now), days }
   const cards = milestoneCards(hero, milestones, today)
   const line = dailyLine(profile, today)
 

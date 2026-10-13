@@ -48,6 +48,15 @@ export function daysBetween(startISO, endISO) {
   return dayNumber(end) - dayNumber(start)
 }
 
+// THE clean-day count. The Home ring, page 2 (clean time), milestones and tracker lists all use
+// this, so they always agree: whole calendar days from the start date to today in the phone's
+// time zone (start day = 0; a future start = 0). Calendar days, not elapsed hours, so midnight
+// is when the count goes up and DST can never make it jump or lag.
+export function cleanDayCount(startISO, todayKey = todayISO()) {
+  const days = daysBetween(startISO, todayKey)
+  return Number.isFinite(days) && days > 0 ? days : 0
+}
+
 function daysInMonth(y, m) {
   return new Date(Date.UTC(y, m, 0)).getUTCDate() // day 0 of next month = last day of m
 }
