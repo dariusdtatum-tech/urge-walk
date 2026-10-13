@@ -14,6 +14,7 @@ import { MilestonesList } from './Milestones.jsx'
 import PageHeader from './PageHeader.jsx'
 import { useTrackerEditor } from './useTrackerEditor.jsx'
 import WalkLengthPicker from './WalkLengthPicker.jsx'
+import LegalLinks from './LegalLinks.jsx'
 
 // The setup answers as You rows (each opens its editor).
 function answers(p) {
@@ -144,6 +145,7 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
       </button>
 
       <p className="you-footnote">Everything stays on this phone. No account, no tracking.</p>
+      <LegalLinks />
 
       {sheet?.mode === 'milestones' && hero && (
         <MilestonesList data={milestones} habit={hero} today={today} onClose={() => setSheet(null)} />
