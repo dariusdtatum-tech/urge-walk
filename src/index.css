@@ -74,6 +74,11 @@
   --title: #24395c;     /* navy: titles and the ring number */
   --muted: #6b7280;     /* on cream and cards only */
   --muted-sand: #5b6270; /* muted text on sand */
+  /* Breathe orb: pearl gradient, its rim, halo and the guide rings */
+  --breathe-pearl-a: #fdfbf7; --breathe-pearl-b: #d7e8e1; --breathe-pearl-c: #a9cbc0;
+  --breathe-rim: #5d9384;    /* pearl edge: 3:1 on the page */
+  --breathe-halo: rgba(169, 203, 192, 0.25);
+  --breathe-line: #8d8778;   /* outer ring + dashed guide: 3:1 on the page */
   --accent: #3f7a6b;    /* sea-text: links, Edit, kicker, accent words */
   --ring-a: #5d9384;
   --ring-b: #a9cbc0;
@@ -160,6 +165,11 @@
     --title: #f3ede2;
     --muted: #a7b0bf;
     --muted-sand: #a7b0bf;
+    /* Night Breathe: a deep sea-glass pearl with a bright rim, not a cream ball */
+    --breathe-pearl-a: #4f8279; --breathe-pearl-b: #2f5c5a; --breathe-pearl-c: #1f4049;
+    --breathe-rim: #a9cbc0;
+    --breathe-halo: rgba(169, 203, 192, 0.14);
+    --breathe-line: #6f84a3;
     --accent: #a9cbc0;
     --ring-a: #a9cbc0;
     --ring-b: #d3e6df;
