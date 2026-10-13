@@ -1272,7 +1272,7 @@
   display: flex;
   flex-direction: column;
   padding-top: env(safe-area-inset-top);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 132px); /* room for the pinned button */
+  /* the button row is part of the flow (margin-top: auto), so nothing can sit underneath it */
 }
 .ob-top { height: 44px; display: flex; align-items: center; gap: 0; padding: 0 14px; margin-top: 10px; }
 .ob-back { width: 44px; height: 44px; display: grid; place-items: center; border: none; background: none; color: var(--title); cursor: pointer; font-size: 30px; line-height: 1; }
@@ -1287,8 +1287,8 @@
 .ob-body { display: flex; flex-direction: column; }
 .ob-has-scroll .ob-body { flex: 1; min-height: 0; }
 .ob-foot {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 4;
-  padding: 16px 22px calc(env(safe-area-inset-bottom) + 30px);
+  position: relative; z-index: 4; margin-top: auto; flex: none;
+  padding: 20px 22px calc(env(safe-area-inset-bottom) + 24px);
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   background: linear-gradient(180deg, transparent, var(--bg) 26%);
 }
@@ -1302,11 +1302,12 @@
 
 /* 01 Welcome */
 .ob-welcome { padding-bottom: 0; }
-.ob-hero { position: absolute; left: 0; right: 0; top: 0; width: 100%; height: 520px; z-index: 0; }
+/* the scene shrinks on short phones so the text and button always fit below it */
+.ob-hero { position: absolute; left: 0; right: 0; top: 0; width: 100%; height: clamp(260px, calc(100dvh - 300px), 520px); z-index: 0; }
 .ob-sun { fill: var(--ob-sun); }
 .ob-w1 { fill: var(--ob-w1); } .ob-w2 { fill: var(--ob-w2); } .ob-w3 { fill: var(--ob-w3); } .ob-w4 { fill: var(--ob-w4); }
 .ob-foam { fill: none; stroke: var(--ob-foam); stroke-width: 2; }
-.ob-wl { position: relative; z-index: 2; margin-top: min(470px, 56dvh); text-align: center; padding: 0 30px; }
+.ob-wl { position: relative; z-index: 2; margin-top: clamp(190px, calc(100dvh - 390px), 470px); text-align: center; padding: 0 30px; }
 .ob-title-xl { font-family: var(--font-serif); font-weight: 600; font-size: 46px; line-height: 1; color: var(--title); margin: 0; }
 .ob-tagline { font-size: 36px !important; margin-top: 6px; }
 .ob-lead { font-size: 15px; color: var(--muted-sand); margin-top: 12px; line-height: 1.45; font-weight: 500; }
@@ -1625,3 +1626,8 @@
 /* Undo last reset (24 h, in the tracker's edit sheet) */
 .undo-reset { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 .undo-reset-note { font-size: 0.85rem; color: var(--muted); }
+
+/* Onboarding screens with a long list: the screen is exactly one viewport tall and the list
+   scrolls inside the space left above the button, so no row can sit under the button. */
+.ob.ob-has-scroll { height: 100dvh; min-height: 0; }
+.ob-has-scroll .ob-scroll { flex: 1; min-height: 0; max-height: none; }
