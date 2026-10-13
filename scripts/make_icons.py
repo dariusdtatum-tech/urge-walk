@@ -1,4 +1,4 @@
-"""Generates the Urge Walk PWA icons into public/ from the Light A icon (scripts/icon/light-a.svg).
+"""Generates the Urge Walk PWA icons into public/ from the Light B icon (scripts/icon/light-b.svg).
 Run: python3 scripts/make_icons.py   (needs rsvg-convert and Pillow)
 
 Writes:
@@ -14,7 +14,7 @@ import io, math, os, re, shutil, subprocess
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, "icon", "light-a.svg")
+SRC = os.path.join(HERE, "icon", "light-b.svg")
 OUT = os.path.join(HERE, "..", "public")
 SVG = open(SRC).read()
 

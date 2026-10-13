@@ -16,7 +16,7 @@ describe('app icons', () => {
     expect([p.w, p.h]).toEqual([size, size])
     expect([2, 0]).toContain(p.colorType) // RGB or grey, no alpha
   })
-  it('favicon.svg is the Light A icon', () => {
+  it('favicon.svg is the Light B icon', () => {
     expect(readFileSync(new URL('../../public/favicon.svg', import.meta.url), 'utf8')).toMatch(/^<svg[^>]+viewBox="0 0 1024 1024"/)
   })
 })
