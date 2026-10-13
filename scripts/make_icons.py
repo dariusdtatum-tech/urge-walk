@@ -1,14 +1,17 @@
-"""Generates the Urge Walk PWA icons into public/ from the Light B icon (scripts/icon/light-b.svg).
+"""File names carry the icon version (-b): iOS and browsers cache home-screen icons by URL,
+so a new icon needs a new name. Bump the suffix (and index.html / vite.config.js) on the next change.
+
+Generates the Urge Walk PWA icons into public/ from the Light B icon (scripts/icon/light-b.svg).
 Run: python3 scripts/make_icons.py   (needs rsvg-convert and Pillow)
 
 Writes:
-  apple-touch-icon.png  180, opaque (iOS shows transparency as black)
-  pwa-192x192.png       192
-  pwa-512x512.png       512
-  pwa-maskable-512.png  512, opaque; the mark is re-centred and scaled to sit inside the
+  apple-touch-icon-b.png  180, opaque (iOS shows transparency as black)
+  pwa-192-b.png       192
+  pwa-512-b.png       512
+  pwa-maskable-512-b.png  512, opaque; the mark is re-centred and scaled to sit inside the
                         maskable safe zone (circle of radius 40% of the size)
-  favicon.svg           the source SVG
-  favicon-64.png, favicon-32.png, favicon.ico (16/32/48)
+  favicon-b.svg           the source SVG
+  favicon-64-b.png, favicon-32-b.png, favicon-b.ico (16/32/48)
 """
 import io, math, os, re, shutil, subprocess
 from PIL import Image
@@ -16,6 +19,7 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, "icon", "light-b.svg")
 OUT = os.path.join(HERE, "..", "public")
+os.makedirs(OUT, exist_ok=True)
 SVG = open(SRC).read()
 
 
@@ -37,14 +41,14 @@ def save(img, name):
 
 
 full = {s: opaque(render(SVG, s)) for s in (16, 32, 48, 64, 180, 192, 512)}
-save(full[180], "apple-touch-icon.png")
-save(full[192], "pwa-192x192.png")
-save(full[512], "pwa-512x512.png")
-save(full[64], "favicon-64.png")
-save(full[32], "favicon-32.png")
-full[48].save(os.path.join(OUT, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)], append_images=[full[16], full[32]])
-print("wrote favicon.ico")
-shutil.copyfile(SRC, os.path.join(OUT, "favicon.svg")); print("wrote favicon.svg")
+save(full[180], "apple-touch-icon-b.png")
+save(full[192], "pwa-192-b.png")
+save(full[512], "pwa-512-b.png")
+save(full[64], "favicon-64-b.png")
+save(full[32], "favicon-32-b.png")
+full[48].save(os.path.join(OUT, "favicon-b.ico"), sizes=[(16, 16), (32, 32), (48, 48)], append_images=[full[16], full[32]])
+print("wrote favicon-b.ico")
+shutil.copyfile(SRC, os.path.join(OUT, "favicon-b.svg")); print("wrote favicon-b.svg")
 
 # Maskable: find the mark (everything but the background rect), centre it and fit it in the safe circle.
 m = re.match(r'(.*?<rect width="1024" height="1024" fill="url\(#g\)"/>)(.*)(</svg>\s*)$', SVG, re.S)
@@ -59,5 +63,5 @@ far = max(math.hypot(x - cx, y - cy) for x, y in pts)
 k = (0.40 * 1024 * 0.94) / far  # a little margin inside the 80% safe zone
 inner = f'<g transform="translate(512 512) scale({k:.4f}) translate({-cx:.1f} {-cy:.1f})">{mark}'
 masked = opaque(render(head + inner + "</g>" + tail, 512))
-save(masked, "pwa-maskable-512.png")
+save(masked, "pwa-maskable-512-b.png")
 print(f"maskable: mark scale {k:.3f}, farthest point {far * k / 1024:.3f} of size from centre (limit 0.400)")

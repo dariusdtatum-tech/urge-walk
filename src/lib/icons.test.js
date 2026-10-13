@@ -9,14 +9,27 @@ const png = (name) => {
 
 describe('app icons', () => {
   it.each([
-    ['apple-touch-icon.png', 180], ['pwa-192x192.png', 192], ['pwa-512x512.png', 512],
-    ['pwa-maskable-512.png', 512], ['favicon-64.png', 64], ['favicon-32.png', 32],
+    ['apple-touch-icon-b.png', 180], ['pwa-192-b.png', 192], ['pwa-512-b.png', 512],
+    ['pwa-maskable-512-b.png', 512], ['favicon-64-b.png', 64], ['favicon-32-b.png', 32],
   ])('%s is %ipx and opaque', (name, size) => {
     const p = png(name)
     expect([p.w, p.h]).toEqual([size, size])
     expect([2, 0]).toContain(p.colorType) // RGB or grey, no alpha
   })
-  it('favicon.svg is the Light B icon', () => {
-    expect(readFileSync(new URL('../../public/favicon.svg', import.meta.url), 'utf8')).toMatch(/^<svg[^>]+viewBox="0 0 1024 1024"/)
+  it('favicon-b.svg is the Light B icon (versioned name)', () => {
+    expect(readFileSync(new URL('../../public/favicon-b.svg', import.meta.url), 'utf8')).toMatch(/^<svg[^>]+viewBox="0 0 1024 1024"/)
+  })
+})
+
+describe('icon URLs are versioned (iOS caches home-screen icons by URL)', () => {
+  const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8')
+  const cfg = readFileSync(new URL('../../vite.config.js', import.meta.url), 'utf8')
+  it('index.html and the manifest point at the -b files only', () => {
+    expect(html).toContain('apple-touch-icon-b.png')
+    for (const old of ['apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'favicon.ico', 'favicon.svg', 'favicon-32.png']) {
+      expect(html).not.toContain(`/${old}`)
+      expect(cfg).not.toContain(`'${old}'`)
+    }
+    expect(cfg).toContain("'pwa-maskable-512-b.png'")
   })
 })

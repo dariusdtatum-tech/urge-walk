@@ -16,7 +16,9 @@ export default defineConfig({
     // - generates a service worker that caches the app so it works offline
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['apple-touch-icon.png', 'favicon.svg', 'favicon.ico', 'favicon-32.png', 'favicon-64.png'],
+      // versioned like the icons, so iOS/Chrome fetch the new manifest
+      manifestFilename: 'manifest-b.webmanifest',
+      includeAssets: ['apple-touch-icon-b.png', 'favicon-b.svg', 'favicon-b.ico', 'favicon-32-b.png', 'favicon-64-b.png'],
       manifest: {
         name: 'Urge Walk',
         short_name: 'Urge Walk',
@@ -30,14 +32,18 @@ export default defineConfig({
         background_color: '#faf7f1',
         theme_color: '#faf7f1',
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'pwa-192-b.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512-b.png', sizes: '512x512', type: 'image/png' },
+          { src: 'pwa-maskable-512-b.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,woff2}'],
         navigateFallback: BASE + 'index.html',
+        // drop old precaches (e.g. the previous icon files) and take over right away
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],
