@@ -50,6 +50,7 @@ const PAIRS = [
   ['Breathe tile text', 'on-tile-alt', 'tile-alt', 4.5],
   ['Ride it out label under the button', 'title', 'bg', 4.5],
   ['Breathe countdown on screen', 'muted-sand', 'bg', 4.5],
+  ['crisis sheet: muted note on sheet', 'muted', 'surface', 4.5],
   ['Breathe pearl rim on screen (non-text 3:1)', 'breathe-rim', 'bg', 3],
   ['Breathe guide rings on screen (non-text 3:1)', 'breathe-line', 'bg', 3],
   ['onboarding: helper text on cream', 'muted-sand', 'bg', 4.5],

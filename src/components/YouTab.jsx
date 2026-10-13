@@ -9,6 +9,7 @@ import { useToday } from '../lib/useToday.js'
 import { lengthLabel, loadWalkPrefs, saveWalkPrefs } from '../lib/walkStorage.js'
 import AnswerSheet from './AnswerSheet.jsx'
 import Community from './Community.jsx'
+import CrisisSheet from './CrisisSheet.jsx'
 import { TimeBackCard } from './TimeBack.jsx'
 import { MilestonesList } from './Milestones.jsx'
 import PageHeader from './PageHeader.jsx'
@@ -46,6 +47,7 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
   const [profile, setProfile] = useState(() => loadProfile() || emptyProfile())
   const [answer, setAnswer] = useState(null) // which setup answer is being edited
   const [showCommunity, setShowCommunity] = useState(false)
+  const [showCrisis, setShowCrisis] = useState(false)
   const hero = heroHabit(habits)
   const earned = hero ? earnedList(milestones, hero.id).length : 0
 
@@ -146,6 +148,14 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
         <span aria-hidden="true">›</span>
       </button>
 
+      <button className="settings-row" data-testid="crisis-row" onClick={() => setShowCrisis(true)}>
+        <span>
+          <span className="settings-row-title">Crisis resources</span>
+          <span className="settings-row-sub">988, SAMHSA helpline, 911</span>
+        </span>
+        <span aria-hidden="true">›</span>
+      </button>
+
       <p className="you-footnote">For now, everything stays on this phone. No tracking.</p>
       <LegalLinks />
 
@@ -153,6 +163,7 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
         <MilestonesList data={milestones} habit={hero} today={today} onClose={() => setSheet(null)} />
       )}
       {editor.sheets}
+      {showCrisis && <CrisisSheet onClose={() => setShowCrisis(false)} />}
       {answer && (
         <AnswerSheet
           field={answer}
