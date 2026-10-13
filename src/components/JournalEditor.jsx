@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { hasChanges, insertPrompt, MAX_BODY_LENGTH, MAX_TITLE_LENGTH } from '../lib/journal.js'
 import { MOODS, PROMPTS } from '../lib/journalContent.js'
 import { useVisualViewport } from '../lib/useVisualViewport.js'
@@ -13,6 +13,35 @@ function JournalEditor({ draft, entries, restored, onChange, onDone, onDiscard, 
   const [confirm, setConfirm] = useState(null) // null | 'discard' | 'delete'
   const bodyRef = useRef(null)
   const viewport = useVisualViewport()
+  const scrollRef = useRef(null)
+
+  // Keep the line being typed above the keyboard and the iOS accessory bar: the body grows with
+  // its text (the scroll area scrolls, not the textarea), and after each keystroke or keyboard
+  // resize the caret line is scrolled into the visible part of the editor.
+  function keepCaretVisible() {
+    const el = bodyRef.current
+    const box = scrollRef.current
+    if (!el || !box || document.activeElement !== el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 30
+    const before = el.value.slice(0, el.selectionEnd)
+    const ratio = el.value.length ? before.length / el.value.length : 1
+    const caretY = el.offsetTop + Math.min(el.scrollHeight, ratio * el.scrollHeight + lineHeight)
+    const margin = 24
+    if (caretY + margin > box.scrollTop + box.clientHeight) box.scrollTop = caretY + margin - box.clientHeight
+  }
+  useEffect(() => {
+    const el = bodyRef.current
+    if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px` }
+  }, [draft.body])
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return undefined
+    const onResize = () => requestAnimationFrame(keepCaretVisible)
+    vv.addEventListener('resize', onResize)
+    return () => vv.removeEventListener('resize', onResize)
+  }, [])
 
   function change(fields) {
     setTouched(true)
@@ -47,7 +76,7 @@ function JournalEditor({ draft, entries, restored, onChange, onDone, onDiscard, 
         <button className="btn btn-primary editor-done" onClick={onDone}>Done</button>
       </header>
 
-      <div className="editor-scroll">
+      <div className="editor-scroll" ref={scrollRef}>
         <p className="editor-status" data-testid="draft-status" aria-live="polite">{status}</p>
 
         <input
@@ -95,7 +124,9 @@ function JournalEditor({ draft, entries, restored, onChange, onDone, onDiscard, 
           maxLength={MAX_BODY_LENGTH}
           placeholder="Write anything. Only you will see this."
           aria-label="Journal text"
-          onChange={(e) => change({ body: e.target.value })}
+          onChange={(e) => { change({ body: e.target.value }); requestAnimationFrame(keepCaretVisible) }}
+          onFocus={() => setTimeout(keepCaretVisible, 300)}
+          onClick={() => requestAnimationFrame(keepCaretVisible)}
         />
 
         {isEdit && (

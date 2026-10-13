@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   buildFeed, clearDraft, commitDraft, deleteEntry, draftFromEntry, filterFeed, loadDraft, loadJournal,
   newDraft, saveDraft, saveJournal,
@@ -15,7 +15,7 @@ import ResultPill from './ResultPill.jsx'
 const moodInfo = (id) => MOODS.find((m) => m.id === id)
 
 // Journal tab: your entries plus walk notes (read from the walk log), newest first.
-function JournalTab({ onOpenWalk }) {
+function JournalTab({ onOpenWalk, onEditingChange = () => {} }) {
   const today = useToday()
   const [initial] = useState(() => {
     const journal = loadJournal()
@@ -25,6 +25,9 @@ function JournalTab({ onOpenWalk }) {
   })
   const [entries, setEntries] = useState(initial.entries)
   const [draft, setDraft] = useState(initial.draft) // non-null = the editor is open
+  const editing = Boolean(draft)
+  // The app hides its tab bar while the editor is open (it would sit over the keyboard on iPhone).
+  useEffect(() => { onEditingChange(editing); return () => onEditingChange(false) }, [editing, onEditingChange])
   const [restored, setRestored] = useState(initial.draft != null)
   const [query, setQuery] = useState('')
   const [notice, setNotice] = useState(

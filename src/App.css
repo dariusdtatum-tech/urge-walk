@@ -397,9 +397,10 @@
   gap: 8px;
   padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
   border-bottom: 1px solid var(--border);
+  background: var(--bg);
 }
 .editor-heading { font-weight: 600; }
-.editor-done { min-height: 44px; padding: 0 18px; }
+.editor-done { min-height: 44px; padding: 0 18px; box-shadow: none; filter: none; -webkit-tap-highlight-color: transparent; }
 .editor-scroll {
   flex: 1;
   min-height: 0;
@@ -407,7 +408,8 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 10px 20px calc(env(safe-area-inset-bottom) + 16px);
+  /* room under the last line so it can scroll clear of the keyboard's accessory bar */
+  padding: 10px 20px calc(env(safe-area-inset-bottom) + 96px);
 }
 .editor-status { min-height: 1.2em; font-size: 0.8rem; color: var(--muted); }
 .editor-title {
@@ -469,8 +471,9 @@
 }
 
 .editor-body {
-  flex: 1;
+  flex: 1 0 auto;
   min-height: 180px;
+  overflow: hidden; /* grows with its text; .editor-scroll does the scrolling */
   font: inherit;
   font-family: var(--font-serif);
   font-size: 19px; /* 16px+ prevents iOS zoom */

@@ -38,6 +38,7 @@ function liveWalkSaved() {
 function App() {
   // Views: the four tabs, plus 'walk' and 'breathe' (full screen, reached from Ride it out).
   // If a walk was going when the app was closed, reopen straight into it.
+  const [journalEditing, setJournalEditing] = useState(false)
   const [activeTab, setActiveTab] = useState(() => (liveWalkSaved() ? 'walk' : 'home'))
   // Focus mode: while a walk is live, the header and tab bar are hidden.
   const [focus, setFocus] = useState(() => liveWalkSaved())
@@ -147,11 +148,12 @@ function App() {
     view = (
       <>
         <PageHeader title="Journal" />
-        <JournalTab onOpenWalk={(id) => { setFocusWalkId(id); setActiveTab('log') }} />
+        <JournalTab onEditingChange={setJournalEditing} onOpenWalk={(id) => { setFocusWalkId(id); setActiveTab('log') }} />
       </>
     )
   }
 
+  const hideTabbar = activeTab === 'journal' && journalEditing
   const inFocus = ((focus && activeTab === 'walk') || activeTab === 'breathe') && !showBackup
   const tabButton = ({ id, label, Icon }) => (
     <button
@@ -210,7 +212,7 @@ function App() {
         {view}
       </main>
 
-      {!inFocus && (
+      {!inFocus && !hideTabbar && (
         <nav className="tabbar" aria-label="Main">
           <div className="tabbar-tabs">
             {LEFT_TABS.map(tabButton)}
