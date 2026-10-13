@@ -1,38 +1,63 @@
-"""Generates the Urge Walk app icons into public/.
-Run: python3 scripts/make_icons.py  (needs Pillow)"""
-from PIL import Image, ImageDraw
-import os
+"""Generates the Urge Walk PWA icons into public/ from the Light A icon (scripts/icon/light-a.svg).
+Run: python3 scripts/make_icons.py   (needs rsvg-convert and Pillow)
 
-OUT = os.path.join(os.path.dirname(__file__), "..", "public")
-S = 1024  # draw big, then shrink for smooth edges
-BG_TOP, BG_BOTTOM = (20, 33, 46), (11, 18, 26)
-MINT = (125, 211, 192)
+Writes:
+  apple-touch-icon.png  180, opaque (iOS shows transparency as black)
+  pwa-192x192.png       192
+  pwa-512x512.png       512
+  pwa-maskable-512.png  512, opaque; the mark is re-centred and scaled to sit inside the
+                        maskable safe zone (circle of radius 40% of the size)
+  favicon.svg           the source SVG
+  favicon-64.png, favicon-32.png, favicon.ico (16/32/48)
+"""
+import io, math, os, re, shutil, subprocess
+from PIL import Image
 
-img = Image.new("RGB", (S, S))
-d = ImageDraw.Draw(img)
-for y in range(S):  # vertical gradient background
-    t = y / S
-    d.line([(0, y), (S, y)], fill=tuple(int(a + (b - a) * t) for a, b in zip(BG_TOP, BG_BOTTOM)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+SRC = os.path.join(HERE, "icon", "light-a.svg")
+OUT = os.path.join(HERE, "..", "public")
+SVG = open(SRC).read()
 
-# Rising sun: a filled half-circle sitting on a horizon line
-HY = S*0.52  # horizon height
-d.pieslice([S*0.30, HY-S*0.20, S*0.70, HY+S*0.20], 180, 360, fill=MINT)
-d.rounded_rectangle([S*0.16, HY+S*0.035, S*0.84, HY+S*0.065], radius=S*0.015, fill=MINT)
 
-# A winding path from the bottom edge toward the horizon (tapers as it gets far away)
-def bez(p0, p1, p2, p3, t):
-    return tuple((1-t)**3*a + 3*(1-t)**2*t*b + 3*(1-t)*t**2*c + t**3*e
-                 for a, b, c, e in zip(p0, p1, p2, p3))
-pts = [(S*0.42, S*1.02), (S*0.78, S*0.86), (S*0.30, S*0.74), (S*0.52, S*0.64)]
-r0, r1 = S*0.06, S*0.012
-steps = 600
-for i in range(steps + 1):
-    t = i / steps
-    x, y = bez(*pts, t)
-    r = r0 + (r1 - r0) * t
-    d.ellipse([x-r, y-r, x+r, y+r], fill=MINT)
+def render(svg_text, size):
+    png = subprocess.run(["rsvg-convert", "-w", str(size), "-h", str(size)], input=svg_text.encode(),
+                         capture_output=True, check=True).stdout
+    return Image.open(io.BytesIO(png)).convert("RGBA")
 
-for name, size in [("pwa-192x192.png", 192), ("pwa-512x512.png", 512),
-                   ("apple-touch-icon.png", 180), ("favicon-64.png", 64)]:
-    img.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, name))
-    print("wrote", name)
+
+def opaque(img):
+    bg = Image.new("RGB", img.size, (250, 247, 241))
+    bg.paste(img, mask=img.getchannel("A"))
+    return bg
+
+
+def save(img, name):
+    img.save(os.path.join(OUT, name))
+    print("wrote", name, img.size, img.mode)
+
+
+full = {s: opaque(render(SVG, s)) for s in (16, 32, 48, 64, 180, 192, 512)}
+save(full[180], "apple-touch-icon.png")
+save(full[192], "pwa-192x192.png")
+save(full[512], "pwa-512x512.png")
+save(full[64], "favicon-64.png")
+save(full[32], "favicon-32.png")
+full[48].save(os.path.join(OUT, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)], append_images=[full[16], full[32]])
+print("wrote favicon.ico")
+shutil.copyfile(SRC, os.path.join(OUT, "favicon.svg")); print("wrote favicon.svg")
+
+# Maskable: find the mark (everything but the background rect), centre it and fit it in the safe circle.
+m = re.match(r'(.*?<rect width="1024" height="1024" fill="url\(#g\)"/>)(.*)(</svg>\s*)$', SVG, re.S)
+head, mark, tail = m.groups()
+mark_only = render(head.replace('fill="url(#g)"', 'fill="none"') + mark + tail, 1024)
+alpha = mark_only.getchannel("A")
+px = alpha.load()
+pts = [(x, y) for y in range(0, 1024, 2) for x in range(0, 1024, 2) if px[x, y] > 8]
+x0, y0, x1, y1 = alpha.getbbox()
+cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+far = max(math.hypot(x - cx, y - cy) for x, y in pts)
+k = (0.40 * 1024 * 0.94) / far  # a little margin inside the 80% safe zone
+inner = f'<g transform="translate(512 512) scale({k:.4f}) translate({-cx:.1f} {-cy:.1f})">{mark}'
+masked = opaque(render(head + inner + "</g>" + tail, 512))
+save(masked, "pwa-maskable-512.png")
+print(f"maskable: mark scale {k:.3f}, farthest point {far * k / 1024:.3f} of size from centre (limit 0.400)")

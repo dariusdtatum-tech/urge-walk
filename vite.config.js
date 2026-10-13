@@ -16,7 +16,7 @@ export default defineConfig({
     // - generates a service worker that caches the app so it works offline
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['apple-touch-icon.png', 'favicon-64.png'],
+      includeAssets: ['apple-touch-icon.png', 'favicon.svg', 'favicon.ico', 'favicon-32.png', 'favicon-64.png'],
       manifest: {
         name: 'Urge Walk',
         short_name: 'Urge Walk',
@@ -32,7 +32,7 @@ export default defineConfig({
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
