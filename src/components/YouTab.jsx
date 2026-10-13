@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { shortDate } from '../lib/homeStats.js'
 import {
-  IMPORTANCE, IMPROVE, SUPPORT, emptyProfile, identityLine, labelFor, loadProfile, saveProfile,
+  IMPORTANCE, IMPROVE, SUPPORT, communityAvailable, emptyProfile, identityLine, labelFor, loadProfile, saveProfile,
 } from '../lib/profile.js'
 import { heroHabit } from '../lib/homeStats.js'
 import { earnedList, loadMilestones, saveMilestones } from '../lib/milestones.js'
@@ -65,6 +65,7 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
   return (
     <div className="you">
       <PageHeader title="You" />
+      {communityAvailable() && (
       <button className="settings-row community-row" data-testid="community-row" onClick={() => setShowCommunity(true)}>
         <span className="community-ic" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="3" /><circle cx="16.5" cy="10" r="2.5" /><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6M14.5 15.2c.6-.3 1.3-.4 2-.4 2.2 0 3.8 1.3 4.2 4" /></svg>
@@ -75,6 +76,7 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
         </span>
         <span aria-hidden="true">›</span>
       </button>
+      )}
       {notice && (
         <div className="notice" role="status">
           <span>{notice}</span>
@@ -144,7 +146,7 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
         <span aria-hidden="true">›</span>
       </button>
 
-      <p className="you-footnote">Everything stays on this phone. No account, no tracking.</p>
+      <p className="you-footnote">For now, everything stays on this phone. No tracking.</p>
       <LegalLinks />
 
       {sheet?.mode === 'milestones' && hero && (

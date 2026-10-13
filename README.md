@@ -2,7 +2,7 @@
 
 A simple installable web app (PWA) that helps you ride out an urge by taking a short walk.
 
-**Privacy:** everything stays on your device (browser storage only). No accounts, no server, no tracking.
+**Privacy:** in the current version, everything stays on your device (browser storage only). No server, no tracking.
 
 **Status:**
 - **Setup (first run)** — 12 calm screens, one question each, no account and no paywall or upsell: Welcome (with **Restore from a backup**), privacy + a required **I'm 18 or older**, what you're riding out (multi-select, searchable, custom entries; at least one — one tracker per pick), one start date for all of them, then optional days a week / times a day, up to 3 things you want more of, how important this is, how you see yourself, who's with you, and your why. A thin progress bar runs along the top; **Skip** is on screens 4–11. The recap rows tap back to that question; **Let's walk** goes straight to Home. People who already have data skip setup automatically. Answers power the app: the "more of" picks choose the encouragement lines on the Ride it out sheet, the live walk and Breathe; **Critical** adds a Ride it out card above the ring on Home; "I see myself as" shows under the Home tagline; **Someone I trust** (a name and a validated phone number, stored only on this phone) adds **Text <name>** to the Ride it out sheet (an `sms:` link, nothing prefilled); the why shows on the sheet, the walk and Breathe. **The Urge Walk community** shows *Coming soon* until `COMMUNITY_INVITE_URL` in `src/lib/profile.js` is set to a public Discord invite. Every answer is editable in **You → Your answers**, and **Redo setup** goes through it again (existing trackers are kept, never duplicated).

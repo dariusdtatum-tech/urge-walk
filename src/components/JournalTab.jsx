@@ -93,7 +93,7 @@ function JournalTab({ onOpenWalk, onEditingChange = () => {} }) {
         <section className="empty">
           <div className="empty-icon" aria-hidden="true">📓</div>
           <h2>Your journal</h2>
-          <p>A few honest lines can help. Write about today, an urge, or something good. It stays on this phone.</p>
+          <p>A few honest lines can help. Write about today, an urge, or something good. For now, it stays on this phone.</p>
           <button className="btn btn-primary btn-big" onClick={() => openEditor(newDraft(Date.now()))}>
             Write your first entry
           </button>

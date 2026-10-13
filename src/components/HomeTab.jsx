@@ -112,7 +112,7 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
         <section className="empty">
           <div className="empty-icon" aria-hidden="true">🌅</div>
           <h2>Every day counts</h2>
-          <p>Add the date you started, and Urge Walk will count your clean days. It stays on this phone only.</p>
+          <p>Add the date you started, and Urge Walk will count your clean days. For now, it stays on this phone only.</p>
           <button className="btn btn-primary btn-big" onClick={() => setSheet({ mode: 'add' })}>
             Add your sober date
           </button>

@@ -18,7 +18,7 @@ const nextStep = (s) => ORDER[Math.min(ORDER.length - 1, ORDER.indexOf(s) + 1)]
 const prevStep = (s) => ORDER[Math.max(0, ORDER.indexOf(s) - 1)]
 const line = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }
 const PRIVACY = [
-  { id: 'account', title: 'No account', text: 'Nothing to sign up for. No email, no password.', icon: <svg {...line}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6" /><path d="M4 4l16 16" /></svg> },
+  { id: 'account', title: 'No account needed', text: 'Nothing to sign up for in this version. No email, no password.', icon: <svg {...line}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6" /><path d="M4 4l16 16" /></svg> },
   { id: 'tracking', title: 'No tracking', text: 'No ads, no analytics, no location history.', icon: <svg {...line}><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="2.5" /><path d="M4 4l16 16" /></svg> },
   { id: 'file', title: 'Your backup, your file', text: 'Export or restore whenever you want.', icon: <svg {...line}><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" /></svg> },
 ]
@@ -119,7 +119,7 @@ function Onboarding({ mode = 'new', onDone, onRestore, onCancel }) {
     : `One date for ${joinNames(mode === 'redo' ? newPicks : draft.picks) || 'everything you picked'}. You can change each later.`
 
   const screens = {
-    2: { title: 'Everything stays on this phone.', cta: 'Sounds good', ok: draft.adult,
+    2: { title: 'For now, everything stays on this phone.', cta: 'Sounds good', ok: draft.adult,
       body: (
         <>
           <div className="ob-pv">
