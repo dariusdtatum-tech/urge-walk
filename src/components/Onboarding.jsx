@@ -132,6 +132,7 @@ function Onboarding({ mode = 'new', onDone, onRestore, onCancel }) {
             <span className="ob-box" aria-hidden="true">{draft.adult && <Check />}</span>
             I’m 18 or older
           </label>
+          <p className="ob-disclaimer" data-testid="ob-disclaimer">Urge Walk is a habit tool, not medical treatment.</p>
         </>
       ) },
     3: { title: 'What are you riding out?', sub: 'Choose all that apply. You can add more later.', ok: draft.picks.length > 0, scroll: true,

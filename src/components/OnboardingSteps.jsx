@@ -192,12 +192,12 @@ export function SupportStep({ value, onChange }) {
   const phoneBad = trustedPhone.trim() !== '' && validatePhone(trustedPhone) == null
   return (
     <div className="ob-opts" role="radiogroup" aria-label="Who’s with you?">
-      {SUPPORT.map((o) => {
-        const soon = o.id === 'community' && !communityAvailable()
+      {/* Community is only offered once it exists (no "Coming soon" placeholders) */}
+      {SUPPORT.filter((o) => o.id !== 'community' || communityAvailable()).map((o) => {
         return (
           <div key={o.id}>
-            <Option selected={support === o.id} disabled={soon} onSelect={() => set({ support: o.id })}
-              title={o.label} hint={o.hint} badge={soon ? 'Coming soon' : null} testId={`support-${o.id}`} />
+            <Option selected={support === o.id} onSelect={() => set({ support: o.id })}
+              title={o.label} hint={o.hint} testId={`support-${o.id}`} />
             {o.id === 'trusted' && support === 'trusted' && (
               <div className="ob-trusted">
                 <label className="field">

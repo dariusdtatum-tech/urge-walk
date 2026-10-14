@@ -18,6 +18,7 @@ import PageHeader from './PageHeader.jsx'
 import { useTrackerEditor } from './useTrackerEditor.jsx'
 import WalkLengthPicker from './WalkLengthPicker.jsx'
 import LegalLinks from './LegalLinks.jsx'
+import { THEMES, loadTheme, saveTheme } from '../lib/theme.js'
 
 // The setup answers as You rows (each opens its editor).
 function answers(p) {
@@ -65,6 +66,8 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
   const [showCrisis, setShowCrisis] = useState(false)
   const [showAnswers, setShowAnswers] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [confirmErase, setConfirmErase] = useState(false)
+  const [theme, setTheme] = useState(loadTheme)
   const hero = heroHabit(habits)
   const earned = hero ? earnedList(milestones, hero.id).length : 0
 
@@ -91,10 +94,11 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
     const text = JSON.stringify(buildBackup(localStorage, now), null, 2)
     let outcome = 'cancelled'
     try { outcome = await shareOrDownload(text, backupFilename(now)) } catch { outcome = 'failed' }
-    if (outcome !== 'shared' && outcome !== 'downloaded') {
-      setNotice('Nothing was erased: the backup file wasn’t saved.')
-      return
-    }
+    // Sharing cancelled or not supported: don't lock them out; ask once more, plainly.
+    if (outcome !== 'shared' && outcome !== 'downloaded') { setConfirmErase(true); return }
+    eraseAll()
+  }
+  function eraseAll() {
     clearAllData()
     window.location.reload()
   }
@@ -167,6 +171,16 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
           sub={`Go through the questions again${profile.onboardedAt && !profile.skipped ? ` · last done ${shortDate(profile.onboardedAt.slice(0, 10), today)}` : ''}`} />
       </section>
 
+      <section className="you-group" aria-labelledby="g-look">
+        <h2 className="you-group-title" id="g-look">Appearance</h2>
+        <div className="segmented you-theme" role="group" aria-labelledby="g-look" data-testid="theme-picker">
+          {THEMES.map((t) => (
+            <button key={t.id} type="button" className={theme === t.id ? 'segment active' : 'segment'}
+              aria-pressed={theme === t.id} onClick={() => setTheme(saveTheme(t.id))}>{t.label}</button>
+          ))}
+        </div>
+      </section>
+
       <section className="you-group" aria-labelledby="g-data">
         <h2 className="you-group-title" id="g-data">Your data</h2>
         <Row title="Backup & restore" sub={lastBackupLabel(loadBackupMeta())} testId="backup-row" onClick={onOpenBackup} />
@@ -186,11 +200,23 @@ function YouTab({ onOpenBackup, onRedo = () => {} }) {
         <div data-testid="reset-app-dialog">
           <ConfirmDialog
             title="Reset Urge Walk?"
-            message="First we’ll save a backup file. Then everything Urge Walk keeps on this phone is erased and setup starts again. If the backup isn’t saved, nothing is erased."
+            message="First we’ll save a backup file. Then everything Urge Walk keeps on this phone is erased and setup starts again. If the backup isn’t saved, we’ll ask before erasing anything."
             confirmLabel="Save backup and reset"
             cancelLabel="Keep my data"
             onCancel={() => setConfirmReset(false)}
             onConfirm={resetApp}
+          />
+        </div>
+      )}
+      {confirmErase && (
+        <div data-testid="erase-dialog">
+          <ConfirmDialog
+            title="Backup not saved"
+            message="The backup file wasn’t saved, so nothing has been erased. You can erase without a backup, but your counts, walks and journal can’t be brought back."
+            confirmLabel="Erase without backup"
+            cancelLabel="Keep my data"
+            onCancel={() => { setConfirmErase(false); setNotice('Nothing was erased.') }}
+            onConfirm={eraseAll}
           />
         </div>
       )}
