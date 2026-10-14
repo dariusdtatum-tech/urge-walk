@@ -42,9 +42,6 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,woff2}'],
         navigateFallback: BASE + 'index.html',
-        // The bare icon test page must load itself, never the app shell.
-        navigateFallbackDenylist: [/icon-test.*\.html$/],
-        globIgnores: ['**/icon-test*.html'],
         // drop old precaches (e.g. the previous icon files) and take over right away
         cleanupOutdatedCaches: true,
         clientsClaim: true,

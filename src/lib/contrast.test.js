@@ -38,6 +38,7 @@ const PAIRS = [
   ['titles + ring number on screen', 'title', 'bg', 4.5],
   ['titles on cards', 'title', 'card', 4.5],
   ['chip numbers on sand', 'title', 'sand', 4.5],
+  ['body text on sand (Just log it sub, chip sub-lines)', 'text', 'sand', 4.5],
   ['muted captions on screen', 'muted', 'bg', 4.5],
   ['muted captions on cards', 'muted', 'card', 4.5],
   ['muted labels on sand (chips, Log row)', 'muted-sand', 'sand', 4.5],
@@ -104,6 +105,20 @@ for (const [theme, t] of [['light (cream)', light], ['dark (coastal night)', dar
     })
   })
 }
+
+describe('dark tokens', () => {
+  // index.css has the night palette twice: for System (media query) and for Appearance → Dark.
+  it('the two dark blocks are identical', () => {
+    const a = css.indexOf(":root:not([data-theme='light']) {")
+    const b = css.indexOf(":root[data-theme='dark'] {")
+    expect(a).toBeGreaterThan(-1)
+    expect(b).toBeGreaterThan(a)
+    const sys = tokens(css.slice(a, css.indexOf('}', a)))
+    const forced = tokens(css.slice(b, css.indexOf('}', b)))
+    expect(Object.keys(sys).length).toBeGreaterThan(20)
+    expect(forced).toEqual(sys)
+  })
+})
 
 describe('palette', () => {
   it('sea glass #a9cbc0 is the ring, chart and badge colour; #3f7a6b is sea as text on cream', () => {

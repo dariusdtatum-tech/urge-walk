@@ -4,7 +4,8 @@ import { readObject, writeObject } from './storage.js'
 
 export const STRESS_KEY = 'urgewalk.v1.lastStressAt' // { at } ride it out / walk / breathe / reset
 export const SAVED_KEY = 'urgewalk.v1.lastSaved' // { at, id } the last ride-it-out save
-export const BANNER_KEY = 'urgewalk.v1.undoBannerDismissed' // { at: reset.at } the dismissed undo banner
+export const BANNER_KEY = 'urgewalk.v1.undoBannerDismissed' // { list: [reset.at, ...] } dismissed undo banners
+const BANNER_KEEP = 20
 export const CALM_AFTER_MS = 30 * 60 * 1000
 export const HIGHLIGHT_MS = 12 * 1000
 
@@ -28,9 +29,19 @@ export function recentlySaved(now = Date.now(), storage = globalThis.localStorag
 }
 
 // The Home undo banner for a reset can be dismissed; it stays dismissed for that reset only.
+// One entry per reset (each tracker has its own), so dismissing one banner never hides another.
+// Older versions stored a single { at }; that is read as a one-item list.
+function dismissedList(storage) {
+  const v = readObject(BANNER_KEY, storage)
+  if (Array.isArray(v?.list)) return v.list.filter((x) => typeof x === 'string')
+  if (typeof v?.at === 'string') return [v.at]
+  return []
+}
 export function bannerDismissed(resetAt, storage = globalThis.localStorage) {
-  return readObject(BANNER_KEY, storage)?.at === resetAt
+  return dismissedList(storage).includes(resetAt)
 }
 export function dismissBanner(resetAt, storage = globalThis.localStorage) {
-  writeObject(BANNER_KEY, { at: resetAt }, storage)
+  const list = dismissedList(storage).filter((x) => x !== resetAt)
+  list.push(resetAt)
+  writeObject(BANNER_KEY, { list: list.slice(-BANNER_KEEP) }, storage)
 }

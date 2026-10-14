@@ -1,5 +1,5 @@
 // App icons in public/: right pixel sizes, and no alpha channel (iOS turns transparency black).
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const png = (name) => {
@@ -36,10 +36,11 @@ describe('icon URLs are versioned (iOS caches home-screen icons by URL)', () => 
     expect(cfg).not.toMatch(/any maskable|maskable any/)
     expect(cfg).toContain("manifestFilename: 'manifest-c.webmanifest'")
   })
-  it('bare icon test page: title + one apple-touch-icon, no manifest, no scripts', () => {
-    const t = readFileSync(new URL('../../public/icon-test.html', import.meta.url), 'utf8')
-    expect(t).toContain('<link rel="apple-touch-icon" sizes="180x180" href="/urge-walk/apple-touch-icon-c.png">')
-    expect(t).not.toMatch(/manifest|<script|serviceWorker/)
+  it('test-only icon pages and -d icons are gone', () => {
+    for (const f of ['icon-test.html', 'icon-test2.html', 'icon-test3.html', 'icon-test4.html', 'icon-test5.html', 'apple-touch-icon-d.png', 'apple-touch-icon-d.jpg', 'pwa-192-d.png', 'pwa-512-d.png']) {
+      expect(existsSync(new URL(`../../public/${f}`, import.meta.url))).toBe(false)
+    }
+    expect(cfg).not.toMatch(/icon-test|-d\.(png|jpg)/)
   })
   it('old names are gone', () => {
     for (const old of ['-b.png', 'manifest-b']) { expect(html).not.toContain(`icon${old}`); expect(cfg).not.toContain(`icon${old}`) }

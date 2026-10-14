@@ -15,8 +15,9 @@ function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
   const [logging, setLogging] = useState(false)
   const [note, setNote] = useState('')
   const [result, setResult] = useState('yes')
-  const [askDiscard, setAskDiscard] = useState(false)
-  const close = () => { if (logging && note.trim()) setAskDiscard(true); else onClose() }
+  // Where Discard note leads: 'back' to the Walk/Breathe tiles, or 'close' the sheet. null = not asking.
+  const [askDiscard, setAskDiscard] = useState(null)
+  const close = () => { if (logging && note.trim()) setAskDiscard('close'); else onClose() }
   const swipe = useSwipeDown(close)
   const [{ why, contact }] = useState(() => {
     const p = loadProfile()
@@ -81,7 +82,7 @@ function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
                 placeholder="What helped?" onChange={(e) => setNote(e.target.value)} />
             </label>
             <div className="sheet-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => (note.trim() ? setAskDiscard(true) : setLogging(false))}>Back</button>
+              <button type="button" className="btn btn-secondary" onClick={() => (note.trim() ? setAskDiscard('back') : setLogging(false))}>Back</button>
               <button type="submit" className="btn btn-primary">Save</button>
             </div>
           </form>
@@ -93,8 +94,14 @@ function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
           message="You typed a note that isn’t saved yet."
           confirmLabel="Discard note"
           cancelLabel="Keep editing"
-          onCancel={() => setAskDiscard(false)}
-          onConfirm={() => { setAskDiscard(false); onClose() }}
+          onCancel={() => setAskDiscard(null)}
+          onConfirm={() => {
+            const to = askDiscard
+            setAskDiscard(null)
+            setNote('')
+            if (to === 'back') setLogging(false)
+            else onClose()
+          }}
         /></div>
       )}
     </div>

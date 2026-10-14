@@ -1131,7 +1131,7 @@
 
 /* Backup screen title */
 .backup-top { flex-direction: column; align-items: flex-start; gap: 0; }
-.backup-top .back-btn { min-height: 36px; padding: 0 4px 0 0; }
+.backup-top .back-btn { padding: 0 4px 0 0; min-width: 44px; }
 
 /* ---------- Tab bar: two tabs, the "Ride it out" button, two tabs ---------- */
 .tabbar { padding: 0 4px; }
@@ -1220,7 +1220,7 @@
 .breathe-in .breathe-halo, .breathe-in .breathe-pearl, .breathe-hold .breathe-halo, .breathe-hold .breathe-pearl { transform: translate(-50%, -50%) scale(1); transition: transform 4s ease-in-out; }
 .breathe-out .breathe-halo, .breathe-out .breathe-pearl { transform: translate(-50%, -50%) scale(0.577); transition: transform 6s ease-in-out; }
 .breathe-words { min-height: 44px; display: grid; place-items: center; }
-.breathe-word { font-family: var(--font-serif); font-size: 2.5rem; font-weight: 600; line-height: 1.1; color: var(--title); animation: word-in 0.9s ease both; }
+.breathe-word { font-family: var(--font-serif); font-size: 2.5rem; font-weight: 600; line-height: 1.1; color: var(--title); animation: word-in 0.3s ease both; }
 @keyframes word-in { from { opacity: 0; } to { opacity: 1; } }
 .breathe-count { margin-top: -14px; font-family: var(--font-serif); font-size: 1.375rem; font-weight: 600; color: var(--muted-sand); font-variant-numeric: lining-nums tabular-nums; }
 .breathe-finish {

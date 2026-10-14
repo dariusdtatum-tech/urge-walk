@@ -44,9 +44,9 @@ function BreatheScreen({ onSave, onCancel }) {
     setEndedAt(startedAt + BREATHE_SECONDS * 1000)
   }, [elapsed, endedAt, startedAt])
 
-  // A gentle tap at each phase change, where the phone supports it.
+  // A gentle tap when the breath turns (in / out), where the phone supports it. Not on the hold.
   useEffect(() => {
-    if (endedAt == null) navigator.vibrate?.(8)
+    if (endedAt == null && phase !== 'hold') navigator.vibrate?.(8)
   }, [phase, endedAt])
 
   if (endedAt != null) {
