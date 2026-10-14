@@ -9,9 +9,8 @@ const png = (name) => {
 
 describe('app icons', () => {
   it.each([
-    ['apple-touch-icon-b.png', 180], ['apple-touch-icon-120-b.png', 120], ['apple-touch-icon-152-b.png', 152], ['apple-touch-icon-167-b.png', 167],
-    ['apple-touch-icon.png', 180], ['apple-touch-icon-precomposed.png', 180], ['pwa-192-b.png', 192], ['pwa-512-b.png', 512],
-    ['pwa-maskable-512-b.png', 512], ['favicon-64-b.png', 64], ['favicon-32-b.png', 32],
+    ['apple-touch-icon-c.png', 180], ['apple-touch-icon.png', 180], ['apple-touch-icon-precomposed.png', 180],
+    ['pwa-192-c.png', 192], ['pwa-512-c.png', 512], ['pwa-maskable-512-c.png', 512], ['favicon-64-b.png', 64], ['favicon-32-b.png', 32],
   ])('%s is %ipx and opaque', (name, size) => {
     const p = png(name)
     expect([p.w, p.h]).toEqual([size, size])
@@ -25,12 +24,29 @@ describe('app icons', () => {
 describe('icon URLs are versioned (iOS caches home-screen icons by URL)', () => {
   const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8')
   const cfg = readFileSync(new URL('../../vite.config.js', import.meta.url), 'utf8')
-  it('index.html and the manifest point at the -b files only', () => {
-    expect(html).toContain('apple-touch-icon-b.png')
+  it('index.html has exactly one apple-touch-icon: 180px, -c, absolute', () => {
+    const tags = html.match(/<link rel="apple-touch-icon"[^>]*>/g)
+    expect(tags).toEqual(['<link rel="apple-touch-icon" sizes="180x180" href="/urge-walk/apple-touch-icon-c.png" />'])
+  })
+  it('manifest: 180/192/512 "any" PNGs with -c names, maskable separate, never "any maskable"', () => {
+    for (const [f, s] of [['apple-touch-icon-c.png', 180], ['pwa-192-c.png', 192], ['pwa-512-c.png', 512]]) {
+      expect(cfg).toMatch(new RegExp(`'${f}', sizes: '${s}x${s}', type: 'image/png', purpose: 'any' }`))
+    }
+    expect(cfg).toContain("'pwa-maskable-512-c.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }")
+    expect(cfg).not.toMatch(/any maskable|maskable any/)
+    expect(cfg).toContain("manifestFilename: 'manifest-c.webmanifest'")
+  })
+  it('bare icon test page: title + one apple-touch-icon, no manifest, no scripts', () => {
+    const t = readFileSync(new URL('../../public/icon-test.html', import.meta.url), 'utf8')
+    expect(t).toContain('<link rel="apple-touch-icon" sizes="180x180" href="/urge-walk/apple-touch-icon-c.png">')
+    expect(t).not.toMatch(/manifest|<script|serviceWorker/)
+  })
+  it('old names are gone', () => {
+    for (const old of ['-b.png', 'manifest-b']) { expect(html).not.toContain(`icon${old}`); expect(cfg).not.toContain(`icon${old}`) }
     for (const old of ['pwa-192x192.png', 'pwa-512x512.png', 'favicon.ico', 'favicon.svg', 'favicon-32.png']) {
       expect(html).not.toContain(`/${old}`)
       expect(cfg).not.toContain(`'${old}'`)
     }
-    expect(cfg).toContain("'pwa-maskable-512-b.png'")
+    for (const o of ['apple-touch-icon-b', 'pwa-192-b', 'pwa-512-b', 'pwa-maskable-512-b']) expect(cfg + html).not.toContain(o)
   })
 })

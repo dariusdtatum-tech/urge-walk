@@ -5,10 +5,10 @@ Generates the Urge Walk PWA icons into public/ from the Light B icon (scripts/ic
 Run: python3 scripts/make_icons.py   (needs rsvg-convert and Pillow)
 
 Writes:
-  apple-touch-icon-b.png  180, opaque (iOS shows transparency as black)
-  pwa-192-b.png       192
-  pwa-512-b.png       512
-  pwa-maskable-512-b.png  512, opaque; the mark is re-centred and scaled to sit inside the
+  apple-touch-icon-c.png  180, opaque (iOS shows transparency as black)
+  pwa-192-c.png       192
+  pwa-512-c.png       512
+  pwa-maskable-512-c.png  512, opaque; the mark is re-centred and scaled to sit inside the
                         maskable safe zone (circle of radius 40% of the size)
   favicon-b.svg           the source SVG
   favicon-64-b.png, favicon-32-b.png, favicon-b.ico (16/32/48)
@@ -40,15 +40,13 @@ def save(img, name):
     print("wrote", name, img.size, img.mode)
 
 
-full = {s: opaque(render(SVG, s)) for s in (16, 32, 48, 64, 120, 152, 167, 180, 192, 512)}
-save(full[180], "apple-touch-icon-b.png")
-for s in (120, 152, 167):
-    save(full[s], f"apple-touch-icon-{s}-b.png")
+full = {s: opaque(render(SVG, s)) for s in (16, 32, 48, 64, 180, 192, 512)}
+save(full[180], "apple-touch-icon-c.png")
 # iOS also probes the conventional names next to the page; serve the current icon there too.
 save(full[180], "apple-touch-icon.png")
 save(full[180], "apple-touch-icon-precomposed.png")
-save(full[192], "pwa-192-b.png")
-save(full[512], "pwa-512-b.png")
+save(full[192], "pwa-192-c.png")
+save(full[512], "pwa-512-c.png")
 save(full[64], "favicon-64-b.png")
 save(full[32], "favicon-32-b.png")
 full[48].save(os.path.join(OUT, "favicon-b.ico"), sizes=[(16, 16), (32, 32), (48, 48)], append_images=[full[16], full[32]])
@@ -68,5 +66,5 @@ far = max(math.hypot(x - cx, y - cy) for x, y in pts)
 k = (0.40 * 1024 * 0.94) / far  # a little margin inside the 80% safe zone
 inner = f'<g transform="translate(512 512) scale({k:.4f}) translate({-cx:.1f} {-cy:.1f})">{mark}'
 masked = opaque(render(head + inner + "</g>" + tail, 512))
-save(masked, "pwa-maskable-512-b.png")
+save(masked, "pwa-maskable-512-c.png")
 print(f"maskable: mark scale {k:.3f}, farthest point {far * k / 1024:.3f} of size from centre (limit 0.400)")

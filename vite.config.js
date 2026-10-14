@@ -17,8 +17,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       // versioned like the icons, so iOS/Chrome fetch the new manifest
-      manifestFilename: 'manifest-b.webmanifest',
-      includeAssets: ['apple-touch-icon-b.png', 'favicon-b.svg', 'favicon-b.ico', 'favicon-32-b.png', 'favicon-64-b.png'],
+      manifestFilename: 'manifest-c.webmanifest',
+      includeAssets: ['apple-touch-icon-c.png', 'favicon-b.svg', 'favicon-b.ico', 'favicon-32-b.png', 'favicon-64-b.png'],
       manifest: {
         name: 'Urge Walk',
         short_name: 'Urge Walk',
@@ -32,15 +32,19 @@ export default defineConfig({
         background_color: '#faf7f1',
         theme_color: '#faf7f1',
         icons: [
-          { src: 'apple-touch-icon-b.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
-          { src: 'pwa-192-b.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: 'pwa-512-b.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: 'pwa-maskable-512-b.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // Absolute URLs; 180/192/512 are plain "any" icons (what iOS uses); maskable is its own entry.
+          { src: BASE + 'apple-touch-icon-c.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
+          { src: BASE + 'pwa-192-c.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: BASE + 'pwa-512-c.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: BASE + 'pwa-maskable-512-c.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,woff2}'],
         navigateFallback: BASE + 'index.html',
+        // The bare icon test page must load itself, never the app shell.
+        navigateFallbackDenylist: [/icon-test\.html$/],
+        globIgnores: ['icon-test.html'],
         // drop old precaches (e.g. the previous icon files) and take over right away
         cleanupOutdatedCaches: true,
         clientsClaim: true,
