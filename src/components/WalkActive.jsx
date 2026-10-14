@@ -12,8 +12,10 @@ import ProgressRing from './ProgressRing.jsx'
 // - Timed walk: countdown in a ring that fills as time passes; "+5 min" adds time.
 // - Open walk: counts up inside a slowly breathing ring; no "+5 min".
 // "Finish walk" is the one main button; Pause is quiet text.
-function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend }) {
+function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend, onCancel = () => {}, longPressTip = false }) {
   const [confirming, setConfirming] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [tip, setTip] = useState(longPressTip)
   const paused = isPaused(walk)
   const open = isOpen(walk)
   // Encouragement follows the "more of" picks from setup; the why sits above it.
@@ -27,6 +29,12 @@ function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend }) {
 
   return (
     <section className="walk-active" data-testid="walk-live">
+      {tip && (
+        <div className="lp-tip" role="status" data-testid="longpress-tip">
+          <p><b>Walk started from a long press.</b> Holding the wave button starts a walk right away. Tap it instead to choose Walk, Breathe or Just log it.</p>
+          <button type="button" className="lp-tip-ok" onClick={() => setTip(false)}>Got it</button>
+        </div>
+      )}
       <div className="walk-live-main">
         <ProgressRing value={progress(walk, now)} open={open} paused={paused}>
           <span className="countdown" data-testid="countdown" aria-live="off">{time}</span>
@@ -40,6 +48,9 @@ function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend }) {
 
       <div className="walk-controls">
         <button className="btn btn-primary btn-big btn-finish" onClick={() => setConfirming(true)}>Finish walk</button>
+        <button type="button" className="quiet-btn walk-cancel" data-testid="walk-cancel" onClick={() => setCancelling(true)}>
+          Cancel walk · nothing saved
+        </button>
         <div className="walk-quiet">
           {paused ? (
             <button className="quiet-btn" onClick={onResume}>Resume</button>
@@ -59,6 +70,16 @@ function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend }) {
         </div>
       </div>
 
+      {cancelling && (
+        <ConfirmDialog
+          title="Cancel this walk?"
+          message="Nothing will be saved. You can start again any time."
+          confirmLabel="Cancel walk"
+          cancelLabel="Keep walking"
+          onCancel={() => setCancelling(false)}
+          onConfirm={() => { setCancelling(false); onCancel() }}
+        />
+      )}
       {confirming && (
         <ConfirmDialog
           title={open || remainingMs(walk, now) <= 0 ? 'Finish your walk?' : 'Finish your walk now?'}

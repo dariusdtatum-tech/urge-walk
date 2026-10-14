@@ -13,7 +13,7 @@ import WalkFinish from './WalkFinish.jsx'
 // The walk screen (not a tab any more): walk in progress -> finish screen.
 // The walk in progress is saved to the phone on every change, so closing the app
 // or locking the screen never loses it; the time is worked out from timestamps.
-function WalkTab({ onSaved, onFocusChange = () => {}, onExit = () => {} }) {
+function WalkTab({ onSaved, onFocusChange = () => {}, onExit = () => {}, longPressTip = false }) {
   const [walk, setWalk] = useState(() => loadActiveWalk())
   const [now, setNow] = useState(() => Date.now())
 
@@ -81,6 +81,8 @@ function WalkTab({ onSaved, onFocusChange = () => {}, onExit = () => {} }) {
     <WalkActive
       walk={walk}
       now={now}
+      longPressTip={longPressTip}
+      onCancel={() => commit(null)}
       onPause={() => commit(pauseWalk(walk, Date.now()))}
       onResume={() => { unlockAudio(); const t = Date.now(); setNow(t); commit(resumeWalk(walk, t)) }}
       onExtend={() => commit(extendWalk(walk))}

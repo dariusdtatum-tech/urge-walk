@@ -3,20 +3,24 @@ import { loadProfile, trustedContact } from '../lib/profile.js'
 import { MAX_NOTE_LENGTH } from '../lib/walkStorage.js'
 import { PathIcon, WaveIcon } from './Icons.jsx'
 import { useSwipeDown } from '../lib/useSwipeDown.js'
+import ConfirmDialog from './ConfirmDialog.jsx'
 
 // "Ride it out": two big choices (Walk at the remembered length, or Breathe for a minute)
-// and a quiet "Just log it" for an urge already ridden out. Swipe down or tap outside to close.
+// and an equal "Just log it" for an urge already ridden out. Swipe down or tap outside to close;
+// a typed note is never thrown away without asking.
 function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
-  const swipe = useSwipeDown(onClose)
   const [logging, setLogging] = useState(false)
   const [note, setNote] = useState('')
+  const [askDiscard, setAskDiscard] = useState(false)
+  const close = () => { if (logging && note.trim()) setAskDiscard(true); else onClose() }
+  const swipe = useSwipeDown(close)
   const [{ why, contact }] = useState(() => {
     const p = loadProfile()
     return { why: p?.why ?? '', contact: trustedContact(p) }
   })
 
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay" onClick={close}>
       <div
         className="sheet ride-sheet"
         role="dialog"
@@ -43,13 +47,17 @@ function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
                 <span className="ride-tile-sub">1 min</span>
               </button>
             </div>
+            <button type="button" className="ride-log-btn" data-testid="ride-log" onClick={() => setLogging(true)}>
+              <span className="ride-log-name">Just log it</span>
+              <span className="ride-log-sub">I already rode it out</span>
+            </button>
             {contact && (
               <a className="ride-text" href={contact.href} data-testid="ride-text">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4z" /></svg>
                 Text {contact.name}
               </a>
             )}
-            <button className="ride-log-link" onClick={() => setLogging(true)}>Just log it</button>
+            <p className="ride-tip">Tip: press and hold the wave button to start a walk right away.</p>
           </>
         ) : (
           <form className="ride-log" onSubmit={(e) => { e.preventDefault(); onLog(note) }}>
@@ -60,12 +68,22 @@ function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
                 placeholder="What helped?" onChange={(e) => setNote(e.target.value)} />
             </label>
             <div className="sheet-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setLogging(false)}>Back</button>
+              <button type="button" className="btn btn-secondary" onClick={() => (note.trim() ? setAskDiscard(true) : setLogging(false))}>Back</button>
               <button type="submit" className="btn btn-primary">Save</button>
             </div>
           </form>
         )}
       </div>
+      {askDiscard && (
+        <div onClick={(e) => e.stopPropagation()}><ConfirmDialog
+          title="Discard this note?"
+          message="You typed a note that isn’t saved yet."
+          confirmLabel="Discard note"
+          cancelLabel="Keep editing"
+          onCancel={() => setAskDiscard(false)}
+          onConfirm={() => { setAskDiscard(false); onClose() }}
+        /></div>
+      )}
     </div>
   )
 }
