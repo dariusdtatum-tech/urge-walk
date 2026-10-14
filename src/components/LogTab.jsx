@@ -6,6 +6,7 @@ import {
 import { loadWalks, saveWalks } from '../lib/walkStorage.js'
 import ResultPill, { OutcomeMark } from './ResultPill.jsx'
 import WalkDetailSheet from './WalkDetailSheet.jsx'
+import { LogIcon } from './Icons.jsx'
 
 const DAY_COLORS = { yes: 'var(--res-yes)', kinda: 'var(--res-kinda)', no: 'var(--res-no)' }
 
@@ -52,9 +53,9 @@ function LogTab({ onGoToWalk, initialSelectedId = null }) {
       <div className="log">
         {noticeBox}
         <section className="empty">
-          <div className="empty-icon" aria-hidden="true">🗒️</div>
+          <span className="empty-mark" aria-hidden="true"><LogIcon /></span>
           <h2>No urges logged yet</h2>
-          <p>Next time an urge shows up, ride it out: take a walk, breathe for a minute, or just log it. Each one is saved here.</p>
+          <p>Urges you ride out will show up here.</p>
           <button className="btn btn-primary btn-big" onClick={onGoToWalk}>Ride it out</button>
         </section>
       </div>

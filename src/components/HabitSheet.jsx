@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { isValidISODate } from '../lib/cleanTime.js'
+import { isValidISODate, todayISO } from '../lib/cleanTime.js'
 import { MAX_NAME_LENGTH } from '../lib/storage.js'
+import { shortDate } from '../lib/homeStats.js'
 import ConfirmDialog from './ConfirmDialog.jsx'
 
 // Bottom sheet for adding a new habit or editing an existing one.
@@ -69,7 +70,9 @@ function HabitSheet({ habit, today, onSave, onDelete, onReset, undoable = null, 
           <div className="undo-reset" data-testid="undo-reset">
             <button type="button" className="btn btn-secondary" onClick={onUndoReset}>Undo last reset</button>
             <span className="undo-reset-note">
-              Puts back your previous start date. Available until {new Date(undoable.until).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}.
+              Puts back your start date ({habit.resets?.at(-1)?.prevStartDate ? shortDate(habit.resets.at(-1).prevStartDate, today) : 'before the reset'}).
+              Free, until {new Date(undoable.until).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}{' '}
+              {todayISO(new Date(undoable.until)) === today ? 'today' : 'tomorrow'}.
             </span>
           </div>
         )}

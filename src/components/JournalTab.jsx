@@ -11,6 +11,7 @@ import { useToday } from '../lib/useToday.js'
 import { loadWalks } from '../lib/walkStorage.js'
 import JournalEditor from './JournalEditor.jsx'
 import ResultPill from './ResultPill.jsx'
+import { JournalIcon } from './Icons.jsx'
 
 const moodInfo = (id) => MOODS.find((m) => m.id === id)
 
@@ -91,9 +92,9 @@ function JournalTab({ onOpenWalk, onEditingChange = () => {} }) {
       <div className="journal">
         {noticeBox}
         <section className="empty">
-          <div className="empty-icon" aria-hidden="true">📓</div>
+          <span className="empty-mark" aria-hidden="true"><JournalIcon /></span>
           <h2>Your journal</h2>
-          <p>A few honest lines can help. Write about today, an urge, or something good. For now, it stays on this phone.</p>
+          <p>A few honest lines can help.</p>
           <button className="btn btn-primary btn-big" onClick={() => openEditor(newDraft(Date.now()))}>
             Write your first entry
           </button>
