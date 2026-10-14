@@ -26,3 +26,13 @@ export function encouragementLines(improve = []) {
   }
   return [...out, ...GENERAL]
 }
+
+// Breathe has its own still, breath-focused lines: no walking or movement words.
+export const BREATHE_LINES = [
+  'You don’t have to fight the feeling. Just breathe with it.',
+  'Breathe in through your nose. Let it out slowly.',
+  'Let the out-breath be a little longer than the in-breath.',
+  'The urge is a feeling. It rises, peaks and fades.',
+  'Notice the air going in and out. That’s all for now.',
+  'Stay where you are. Count each breath out.',
+]

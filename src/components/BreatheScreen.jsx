@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { playChime } from '../lib/chime.js'
 import { useWakeLock } from '../lib/useWakeLock.js'
 import { breathPhase } from '../lib/breathe.js'
-import { encouragementLines } from '../lib/encouragement.js'
+import { BREATHE_LINES } from '../lib/encouragement.js'
 import { loadProfile } from '../lib/profile.js'
 import { BREATHE_SECONDS } from '../lib/walkStorage.js'
 import WalkFinish from './WalkFinish.jsx'
@@ -14,7 +14,7 @@ const PHASE_WORDS = { in: 'Breathe in', hold: 'Hold', out: 'Breathe out' }
 
 function BreatheScreen({ onSave, onCancel }) {
   const [startedAt] = useState(() => Date.now())
-  const [{ lines, why, offset }] = useState(() => { const p = loadProfile(); return { lines: encouragementLines(p?.improve), why: p?.why ?? '', offset: Math.floor(Math.random() * 100) } })
+  const [{ lines, why, offset }] = useState(() => { const p = loadProfile(); return { lines: BREATHE_LINES, why: p?.why ?? '', offset: Math.floor(Math.random() * 100) } })
   const [now, setNow] = useState(startedAt)
   const [endedAt, setEndedAt] = useState(null)
   const elapsed = (endedAt ?? now) - startedAt
