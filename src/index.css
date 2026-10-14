@@ -227,6 +227,14 @@
 
 html, body, #root { height: 100%; margin: 0; }
 
+/* Text follows the phone's text size: every size is in rem, and on iPhone the root size comes from
+   Settings → Display & Brightness → Text Size (Dynamic Type) via -apple-system-body.
+   Font family still comes from --font-ui on :root/body. */
+html { font-size: 100%; }
+@supports (font: -apple-system-body) {
+  html { font: -apple-system-body; font-family: var(--font-ui); line-height: 1.5; }
+}
+
 /* The page background lives on <html> only, so the waves (z-index -1) can sit between it and the content */
 html { background: var(--bg-grad), var(--bg); background-color: var(--bg); }
 body {
