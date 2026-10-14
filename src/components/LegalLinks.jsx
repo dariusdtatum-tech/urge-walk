@@ -1,6 +1,7 @@
-// Quiet links to the hosted privacy policy and support pages (opened outside the app).
+// Quiet links to the hosted privacy policy, terms and support pages (opened outside the app).
 const LEGAL_LINKS = [
   { label: 'Privacy policy', href: 'https://dariusdtatum-tech.github.io/urgewalk/privacy.html' },
+  { label: 'Terms', href: 'https://dariusdtatum-tech.github.io/urgewalk/terms.html' },
   { label: 'Support', href: 'https://dariusdtatum-tech.github.io/urgewalk/support.html' },
 ]
 
