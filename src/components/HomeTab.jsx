@@ -6,12 +6,12 @@ import { loadMilestones, ringLabel, ringSegment, saveMilestones, syncMilestones 
 import { loadJournal } from '../lib/journal.js'
 import { bannerDismissed, dismissBanner, isCalm, recentlySaved } from '../lib/calm.js'
 import { undoableReset } from '../lib/homeIdeas.js'
-import { identityLine, loadProfile, rideProminent } from '../lib/profile.js'
+import { identityLine, loadProfile } from '../lib/profile.js'
 import { useNow, useToday } from '../lib/useToday.js'
 import { loadActiveWalk, loadWalks } from '../lib/walkStorage.js'
 import HeroPager from './HeroPager.jsx'
 import NeverZero from './NeverZero.jsx'
-import { MilestoneSheet, MilestonesList } from './Milestones.jsx'
+import { MilestoneSheet } from './Milestones.jsx'
 import { SunriseIcon } from './Icons.jsx'
 import RideBar from './RideBar.jsx'
 import UndoBanner from './UndoBanner.jsx'
@@ -27,7 +27,7 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
   // Load saved data once, when the tab first appears.
   const [walks] = useState(() => loadWalks().walks)
   const [profile] = useState(() => loadProfile())
-  // Trackers + the Edit sheets (shared with the You tab). Home adds { mode: 'milestones' } for the list.
+  // Trackers + the Edit sheets (shared with the You tab).
   const editor = useTrackerEditor({ today, onOpenBackup, onMilestones: (next) => storeMilestones(next) })
   const { habits, notice, setNotice, sheet, setSheet } = editor
   // Week / Month / All time: changes the walks card only, never the ring. Remembered.
@@ -106,15 +106,7 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
         </div>
       )}
 
-      {rideProminent(profile) && !walkInProgress && (
-        <section className="ride-card" data-testid="ride-card" aria-label="Ride it out">
-          <div>
-            <p className="ride-card-title">Urge right now?</p>
-            <p className="ride-card-sub">Walk, breathe, or just log it.</p>
-          </div>
-          <button className="btn btn-primary ride-card-btn" onClick={onRide}>Ride it out</button>
-        </section>
-      )}
+      <RideBar live={walkInProgress} onRide={onRide} onResume={onUrge} />
 
       {hero ? (
         <HeroPager hero={hero} days={days} since={since} segment={segment} label={label} milestones={milestones} today={today} profile={profile} />
@@ -127,8 +119,6 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
           <button className="btn btn-ghost empty-restore" onClick={onOpenBackup}>Restore from a backup</button>
         </section>
       )}
-
-      <RideBar live={walkInProgress} onRide={onRide} onResume={onUrge} />
 
       {hero && <NeverZero hero={hero} walks={walks} today={today} highlight={highlight} />}
 
@@ -145,9 +135,6 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
         </div>
       )}
 
-      {sheet?.mode === 'milestones' && (
-        <MilestonesList data={milestones} habit={hero} today={today} onClose={() => setSheet(null)} />
-      )}
       {celebrated && !sheet && (
         <MilestoneSheet
           milestone={celebration.milestone}

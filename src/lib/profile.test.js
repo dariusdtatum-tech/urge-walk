@@ -3,7 +3,7 @@ import { applyBackup, buildBackup, validateBackup } from './backup.js'
 import { LINES_BY_IMPROVE, encouragementLines } from './encouragement.js'
 import {
   COMMUNITY_INVITE_URL, PROFILE_KEY, communityAvailable, emptyProfile, identityLine, loadProfile, resolveOnboarding,
-  rideProminent, sanitizeProfile, saveProfile, smsHref, supportValid, trackersFromPicks, trustedContact, validatePhone,
+  sanitizeProfile, saveProfile, smsHref, supportValid, trackersFromPicks, trustedContact, validatePhone,
 } from './profile.js'
 import { loadHabits, saveHabits } from './storage.js'
 import { WALK_MESSAGES } from './walkMessages.js'
@@ -151,11 +151,6 @@ describe('encouragement selection', () => {
 })
 
 describe('what answers power', () => {
-  it('only Critical makes Ride it out prominent on Home', () => {
-    expect(rideProminent({ importance: 'critical' })).toBe(true)
-    for (const v of ['very', 'somewhat', 'exploring', null]) expect(rideProminent({ importance: v })).toBe(false)
-    expect(rideProminent(null)).toBe(false)
-  })
   it('identity line under the tagline', () => {
     expect(identityLine(FULL)).toBe('Someone taking back control')
     expect(identityLine({ identity: null })).toBe('')

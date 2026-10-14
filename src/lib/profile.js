@@ -163,9 +163,6 @@ export function resolveOnboarding({ hasData }, storage = globalThis.localStorage
 
 // ---------- What answers power ----------
 
-// "Critical" puts a Ride it out card above the ring on Home.
-export const rideProminent = (profile) => profile?.importance === 'critical'
-
 // The line under the Home tagline, or '' if not chosen.
 export const identityLine = (profile) => IDENTITY.find((o) => o.id === profile?.identity)?.home ?? ''
 
