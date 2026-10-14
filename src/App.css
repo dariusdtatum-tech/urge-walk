@@ -1217,7 +1217,7 @@
 .breathe-halo { width: 240px; height: 240px; background: var(--breathe-halo); }
 .breathe-pearl { width: 208px; height: 208px; background: radial-gradient(circle, var(--breathe-pearl-a) 0%, var(--breathe-pearl-b) 60%, var(--breathe-pearl-c) 100%); box-shadow: inset 0 0 0 2px var(--breathe-rim); }
 /* In over 4s (then hold 1s), out over 6s */
-.breathe-in .breathe-halo, .breathe-in .breathe-pearl { transform: translate(-50%, -50%) scale(1); transition: transform 4s ease-in-out; }
+.breathe-in .breathe-halo, .breathe-in .breathe-pearl, .breathe-hold .breathe-halo, .breathe-hold .breathe-pearl { transform: translate(-50%, -50%) scale(1); transition: transform 4s ease-in-out; }
 .breathe-out .breathe-halo, .breathe-out .breathe-pearl { transform: translate(-50%, -50%) scale(0.577); transition: transform 6s ease-in-out; }
 .breathe-words { min-height: 44px; display: grid; place-items: center; }
 .breathe-word { font-family: var(--font-serif); font-size: 2.5rem; font-weight: 600; line-height: 1.1; color: var(--title); animation: word-in 0.9s ease both; }
@@ -1436,13 +1436,6 @@
   background: none; border: none; color: var(--accent);
   font-size: 0.9375rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
 }
-.ride-card {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 10px; padding: 14px 14px 14px 18px;
-  border-radius: 18px; background: var(--card); border: 1px solid var(--card-border); box-shadow: var(--card-shadow);
-}
-.ride-card-title { font-family: var(--font-serif); font-size: 1.375rem; font-weight: 600; color: var(--title); line-height: 1.1; }
-.ride-card-sub { font-size: 0.8125rem; color: var(--muted); font-weight: 500; margin-top: 2px; }
-.ride-card-btn { flex: none; min-height: 48px; padding: 0 18px; border-radius: 14px; font-weight: 700; }
 
 /* ---------- Home ideas: pager, clean time, milestone cards, daily line, Never zero, reset ---------- */
 .hero-pager {
@@ -1536,7 +1529,7 @@
   /* Waves stay still; cards appear without rising */
   .wave, .walks-card, .summary, .week-card, .backup-card, .empty { animation: none; }
   /* Breathe: the circle stays still (mid size); only the words cross-fade */
-  .breathe-in .breathe-halo, .breathe-in .breathe-pearl, .breathe-out .breathe-halo, .breathe-out .breathe-pearl,
+  .breathe-in .breathe-halo, .breathe-in .breathe-pearl, .breathe-hold .breathe-halo, .breathe-hold .breathe-pearl, .breathe-out .breathe-halo, .breathe-out .breathe-pearl,
   .breathe-halo, .breathe-pearl { transform: translate(-50%, -50%) scale(0.8); transition: none; }
   .tab-ride:active .tab-ride-circle, .ride-tile:active { transform: none; }
   .ob-pbar i { transition: none; }
@@ -1635,7 +1628,8 @@
 }
 .lp-tip b { color: var(--title); }
 .lp-tip-ok { align-self: flex-start; min-height: 44px; padding: 0 4px; border: none; background: none; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }
-.walk-cancel { align-self: center; margin-top: 4px; }
+.walk-cancel { align-self: center; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); border-radius: 0; min-height: 44px; font-size: 0.875rem; }
+.walk-text { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- Review Oct 14: Home ---------- */
 .home-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-bottom: 4px; }
@@ -1679,3 +1673,25 @@ a.settings-row { text-decoration: none; color: inherit; }
   .log-walk .log-minutes { white-space: normal; overflow: visible; }
   .hero-name { max-width: min(70vw, 16rem); white-space: normal; }
 }
+
+/* Breathe: two clear exits. Finish early → check-in; Cancel → nothing saved */
+.breathe-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; }
+.breathe-cancel { color: var(--muted); font-weight: 500; font-size: 0.9375rem; }
+
+/* Text inside the fixed-size rings (Home 206px, walk 252px) grows with the phone's text size only
+   up to a cap, so it never spills out of the circle at 200%. Everything outside the rings scales fully. */
+.hero-ring .hero-number { font-size: min(4.75rem, 80px); }
+.hero-ring .hero-number-sm { font-size: min(3.625rem, 62px); }
+.hero-ring .hero-number-xs { font-size: min(2.75rem, 46px); }
+.hero-ring .hero-unit { font-size: min(1.25rem, 22px); }
+.hero-ring .hero-name { font-size: min(0.82rem, 15px); max-width: 150px; white-space: nowrap; }
+.hero-ring .hero-since { font-size: min(0.75rem, 13px); }
+.countdown { font-size: min(4.5rem, 76px); }
+.countdown-label { font-size: min(1rem, 19px); }
+.countdown-mode { font-size: min(0.75rem, 14px); }
+
+.ob-disclaimer { margin: 10px 0 0; font-size: 0.8125rem; color: var(--muted); text-align: center; }
+.you-theme { width: 100%; }
+.you-theme .segment { min-height: 44px; }
+.ride-log-result { margin: 0 0 12px; }
+.ride-log-result .segment { min-height: 44px; }
