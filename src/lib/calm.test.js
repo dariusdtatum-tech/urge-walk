@@ -60,3 +60,12 @@ describe('backup helpers', () => {
     expect(Object.keys(s._data)).toEqual(['other.app'])
   })
 })
+
+describe('Just log it outcome', () => {
+  it('defaults to Passed and keeps Kinda / Didn’t', () => {
+    expect(buildLoggedRecord({ at: 0 }).result).toBe('yes')
+    expect(buildLoggedRecord({ at: 0, result: 'kinda' }).result).toBe('kinda')
+    expect(buildLoggedRecord({ at: 0, result: 'no' }).result).toBe('no')
+    expect(buildLoggedRecord({ at: 0, result: 'bogus' }).result).toBe('yes')
+  })
+})

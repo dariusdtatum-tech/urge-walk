@@ -65,11 +65,11 @@ export function buildBreatheRecord({ id = makeId(), startedAt, endedAt, result =
 }
 
 // "Just log it": an urge ridden out without a walk or breathing, at `at` (ms). It passed, so result is 'yes'.
-export function buildLoggedRecord({ id = makeId(), at, note = '' }) {
+export function buildLoggedRecord({ id = makeId(), at, note = '', result = 'yes' }) {
   const iso = new Date(at).toISOString()
   return {
     id, kind: 'logged', startedAt: iso, endedAt: iso, mode: 'open', plannedMinutes: null,
-    actualSeconds: 0, endedEarly: false, result: 'yes', note: String(note ?? '').trim().slice(0, MAX_NOTE_LENGTH),
+    actualSeconds: 0, endedEarly: false, result: ['yes', 'kinda', 'no'].includes(result) ? result : 'yes', note: String(note ?? '').trim().slice(0, MAX_NOTE_LENGTH),
   }
 }
 

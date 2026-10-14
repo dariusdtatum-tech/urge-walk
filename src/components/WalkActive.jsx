@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { encouragementLines } from '../lib/encouragement.js'
-import { loadProfile } from '../lib/profile.js'
+import { loadProfile, trustedContact } from '../lib/profile.js'
 import {
   EXTEND_MINUTES, canExtend, elapsedMs, formatClock, formatElapsed, isOpen, isPaused, messageIndex, progress,
   remainingMs,
@@ -11,7 +11,8 @@ import ProgressRing from './ProgressRing.jsx'
 // The walk in progress, in focus mode (no header, no tab bar).
 // - Timed walk: countdown in a ring that fills as time passes; "+5 min" adds time.
 // - Open walk: counts up inside a slowly breathing ring; no "+5 min".
-// "Finish walk" is the one main button; Pause is quiet text.
+// "Finish walk" is the one main button; Pause / +5 min sit right under it. "Cancel walk" is set apart at
+// the very bottom so a stressed tap near Finish can't hit it.
 function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend, onCancel = () => {}, longPressTip = false }) {
   const [confirming, setConfirming] = useState(false)
   const [cancelling, setCancelling] = useState(false)
@@ -19,7 +20,7 @@ function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend, onCancel
   const paused = isPaused(walk)
   const open = isOpen(walk)
   // Encouragement follows the "more of" picks from setup; the why sits above it.
-  const [{ lines, why }] = useState(() => { const p = loadProfile(); return { lines: encouragementLines(p?.improve), why: p?.why ?? '' } })
+  const [{ lines, why, contact }] = useState(() => { const p = loadProfile(); return { lines: encouragementLines(p?.improve), why: p?.why ?? '', contact: trustedContact(p) } })
   const message = lines[messageIndex(walk, now, lines.length)]
   const walked = formatElapsed(elapsedMs(walk, now))
 
@@ -48,9 +49,6 @@ function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend, onCancel
 
       <div className="walk-controls">
         <button className="btn btn-primary btn-big btn-finish" onClick={() => setConfirming(true)}>Finish walk</button>
-        <button type="button" className="quiet-btn walk-cancel" data-testid="walk-cancel" onClick={() => setCancelling(true)}>
-          Cancel walk · nothing saved
-        </button>
         <div className="walk-quiet">
           {paused ? (
             <button className="quiet-btn" onClick={onResume}>Resume</button>
@@ -68,7 +66,14 @@ function WalkActive({ walk, now, onPause, onResume, onFinish, onExtend, onCancel
             </button>
           )}
         </div>
+        {contact && (
+          <a className="quiet-btn walk-text" href={contact.href} data-testid="walk-text-contact">Text {contact.name}</a>
+        )}
       </div>
+
+      <button type="button" className="quiet-btn walk-cancel" data-testid="walk-cancel" onClick={() => setCancelling(true)}>
+        Cancel walk · nothing saved
+      </button>
 
       {cancelling && (
         <ConfirmDialog

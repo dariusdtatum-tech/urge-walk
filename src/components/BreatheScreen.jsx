@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { playChime } from '../lib/chime.js'
 import { useWakeLock } from '../lib/useWakeLock.js'
 import { breathPhase } from '../lib/breathe.js'
 import { encouragementLines } from '../lib/encouragement.js'
@@ -9,6 +10,8 @@ import WalkFinish from './WalkFinish.jsx'
 // Breathe: focus mode (no header or tab bar). A sea-glass circle grows and shrinks with
 // "Breathe in / Breathe out" and a small countdown. With reduced motion the circle stays still
 // and only the words cross-fade. Then the same "Did the urge pass?" check-in as a walk.
+const PHASE_WORDS = { in: 'Breathe in', hold: 'Hold', out: 'Breathe out' }
+
 function BreatheScreen({ onSave, onCancel }) {
   const [startedAt] = useState(() => Date.now())
   const [{ lines, why, offset }] = useState(() => { const p = loadProfile(); return { lines: encouragementLines(p?.improve), why: p?.why ?? '', offset: Math.floor(Math.random() * 100) } })
@@ -35,8 +38,10 @@ function BreatheScreen({ onSave, onCancel }) {
 
   // The minute is up: move to the check-in. Reacting to the clock is what this effect is for.
   useEffect(() => {
+    if (endedAt != null || elapsed < BREATHE_SECONDS * 1000) return
+    playChime() // eyes-closed users hear the minute is up
     // eslint-disable-next-line react/set-state-in-effect
-    if (endedAt == null && elapsed >= BREATHE_SECONDS * 1000) setEndedAt(startedAt + BREATHE_SECONDS * 1000)
+    setEndedAt(startedAt + BREATHE_SECONDS * 1000)
   }, [elapsed, endedAt, startedAt])
 
   // A gentle tap at each phase change, where the phone supports it.
@@ -72,13 +77,16 @@ function BreatheScreen({ onSave, onCancel }) {
           <div className="breathe-pearl" />
         </div>
         <div className="breathe-words" aria-live="polite">
-          <p key={phase} className="breathe-word" data-testid="breathe-word">{phase === 'in' ? 'Breathe in' : 'Breathe out'}</p>
+          <p key={phase} className="breathe-word" data-testid="breathe-word">{PHASE_WORDS[phase]}</p>
         </div>
         {why && <p className="why-quote breathe-why" data-testid="breathe-why">“{why}”</p>}
         <p className="breathe-count" data-testid="breathe-count" aria-label={`${left} seconds left`}>{mm}:{ss}</p>
       </div>
       <p className="breathe-line" data-testid="breathe-line" aria-live="off">{lines[(offset + Math.floor(elapsed / 20000)) % lines.length]}</p>
-      <button className="breathe-finish" onClick={() => (elapsed < 3000 ? onCancel() : setEndedAt(Date.now()))}>Finish</button>
+      <div className="breathe-actions">
+        <button className="breathe-finish" data-testid="breathe-finish" onClick={() => setEndedAt(Date.now())}>Finish early</button>
+        <button className="breathe-finish breathe-cancel" data-testid="breathe-cancel" onClick={onCancel}>Cancel · nothing saved</button>
+      </div>
     </section>
   )
 }

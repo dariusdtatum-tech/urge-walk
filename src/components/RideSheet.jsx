@@ -8,9 +8,13 @@ import ConfirmDialog from './ConfirmDialog.jsx'
 // "Ride it out": two big choices (Walk at the remembered length, or Breathe for a minute)
 // and an equal "Just log it" for an urge already ridden out. Swipe down or tap outside to close;
 // a typed note is never thrown away without asking.
+// Same words as the Log tab tallies. Defaults to Passed; no keyboard until the note is tapped.
+const LOG_RESULTS = [{ id: 'yes', label: 'Passed' }, { id: 'kinda', label: 'Kinda' }, { id: 'no', label: 'Didn’t' }]
+
 function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
   const [logging, setLogging] = useState(false)
   const [note, setNote] = useState('')
+  const [result, setResult] = useState('yes')
   const [askDiscard, setAskDiscard] = useState(false)
   const close = () => { if (logging && note.trim()) setAskDiscard(true); else onClose() }
   const swipe = useSwipeDown(close)
@@ -60,11 +64,20 @@ function RideSheet({ walkLabel, onWalk, onBreathe, onLog, onClose }) {
             <p className="ride-tip">Tip: press and hold the wave button to start a walk right away.</p>
           </>
         ) : (
-          <form className="ride-log" onSubmit={(e) => { e.preventDefault(); onLog(note) }}>
-            <p className="ride-log-lead">An urge you rode out, logged for right now.</p>
+          <form className="ride-log" onSubmit={(e) => { e.preventDefault(); onLog(note, result) }}>
+            <p className="ride-log-lead">An urge from just now, logged as it went.</p>
+            <fieldset className="finish-question ride-log-result">
+              <legend>Did the urge pass?</legend>
+              <div className="segmented" data-testid="ride-log-result">
+                {LOG_RESULTS.map((c) => (
+                  <button key={c.id} type="button" className={result === c.id ? 'segment active' : 'segment'}
+                    aria-pressed={result === c.id} onClick={() => setResult(c.id)}>{c.label}</button>
+                ))}
+              </div>
+            </fieldset>
             <label className="field">
               <span>Note (optional)</span>
-              <textarea rows={2} maxLength={MAX_NOTE_LENGTH} value={note} autoFocus
+              <textarea rows={2} maxLength={MAX_NOTE_LENGTH} value={note}
                 placeholder="What helped?" onChange={(e) => setNote(e.target.value)} />
             </label>
             <div className="sheet-actions">

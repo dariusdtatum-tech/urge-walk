@@ -16,6 +16,7 @@ import { BREATHE_SAVED_MESSAGES, LOGGED_SAVED_MESSAGE } from './lib/walkMessages
 import { hasAnyData } from './lib/backup.js'
 import { resolveOnboarding } from './lib/profile.js'
 import { startWalkNow } from './lib/walkStart.js'
+import { unlockAudio } from './lib/chime.js'
 import { appendWalk, buildBreatheRecord, buildLoggedRecord, lengthLabel, loadActiveWalk, loadWalkPrefs, removeWalk } from './lib/walkStorage.js'
 import { markSaved, markStress } from './lib/calm.js'
 import { readObject, writeObject } from './lib/storage.js'
@@ -81,24 +82,27 @@ function App() {
   }
 
   function handleBreathe() {
+    unlockAudio() // during the tap, so iOS lets the end-of-minute chime play
     markStress()
     setToast('')
     setShowRide(false)
     goTo('breathe')
   }
 
-  function handleLog(note) {
-    const record = buildLoggedRecord({ at: Date.now(), note })
+  function handleLog(note, result = 'yes') {
+    const record = buildLoggedRecord({ at: Date.now(), note, result })
     appendWalk(record)
     markSaved(record.id)
     setShowRide(false)
-    setToast({ text: LOGGED_SAVED_MESSAGE, undoId: record.id })
+    setToast({ text: record.result === 'yes' ? LOGGED_SAVED_MESSAGE : 'Saved. An honest log still counts.', undoId: record.id })
     setDataVer((v) => v + 1)
     goTo(activeTab === 'walk' || activeTab === 'breathe' ? 'home' : activeTab)
   }
 
   // Center button: tap opens Ride it out; a long press starts a walk right away.
   function pressStart() {
+    // The long-press walk starts from a timer, which iOS doesn't count as a tap: unlock sound now.
+    unlockAudio()
     clearTimeout(press.current.timer)
     press.current.fired = false
     press.current.timer = setTimeout(() => {
@@ -117,6 +121,7 @@ function App() {
       return
     }
     navigator.vibrate?.(8)
+    unlockAudio()
     if (liveWalkSaved()) { setFocus(true); goTo('walk'); return }
     markStress()
     setShowRide(true)
@@ -159,14 +164,14 @@ function App() {
     view = (
       <>
         <PageHeader title="Log" />
-        <LogTab onGoToWalk={() => setShowRide(true)} initialSelectedId={focusWalkId} />
+        <LogTab key={dataVer} onGoToWalk={() => setShowRide(true)} initialSelectedId={focusWalkId} />
       </>
     )
   } else {
     view = (
       <>
         <PageHeader title="Journal" />
-        <JournalTab onEditingChange={setJournalEditing} onOpenWalk={(id) => { setFocusWalkId(id); setActiveTab('log') }} />
+        <JournalTab key={dataVer} onEditingChange={setJournalEditing} onOpenWalk={(id) => { setFocusWalkId(id); setActiveTab('log') }} />
       </>
     )
   }
