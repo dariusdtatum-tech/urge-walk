@@ -4,14 +4,17 @@ import { todayISO } from '../lib/cleanTime.js'
 import { cleanDays, heroHabit, loadRange, saveRange, shortDate } from '../lib/homeStats.js'
 import { loadMilestones, ringLabel, ringSegment, saveMilestones, syncMilestones } from '../lib/milestones.js'
 import { loadJournal } from '../lib/journal.js'
-import { isIOS } from '../lib/persist.js'
+import { bannerDismissed, dismissBanner, isCalm, recentlySaved } from '../lib/calm.js'
+import { undoableReset } from '../lib/homeIdeas.js'
 import { identityLine, loadProfile, rideProminent } from '../lib/profile.js'
 import { useNow, useToday } from '../lib/useToday.js'
 import { loadActiveWalk, loadWalks } from '../lib/walkStorage.js'
 import HeroPager from './HeroPager.jsx'
 import NeverZero from './NeverZero.jsx'
 import { MilestoneSheet, MilestonesList } from './Milestones.jsx'
-import PageHeader from './PageHeader.jsx'
+import { SunriseIcon } from './Icons.jsx'
+import RideBar from './RideBar.jsx'
+import UndoBanner from './UndoBanner.jsx'
 import { useTrackerEditor } from './useTrackerEditor.jsx'
 import WalksCard from './WalksCard.jsx'
 
@@ -34,10 +37,14 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
   const [celebrations, setCelebrations] = useState([])
   const walkInProgress = loadActiveWalk() != null
   // Gentle backup reminder (data only lives on this phone)
-  const [showNudge, setShowNudge] = useState(() => shouldNudge(
+  // ...held back for 30 minutes after a stressful moment (Ride it out, a walk or breath, a reset).
+  const [showNudge, setShowNudge] = useState(() => isCalm() && shouldNudge(
     loadBackupMeta(),
     habits.length > 0 || walks.length > 0 || loadJournal().entries.length > 0,
   ))
+  // Closure: right after a save, the "urges ridden out" number is highlighted for a moment.
+  const [highlight] = useState(() => recentlySaved())
+  const [, setBannerTick] = useState(0)
 
   function storeMilestones(next) {
     saveMilestones(next)
@@ -75,25 +82,28 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
 
   return (
     <div className="home">
-      <PageHeader
-        title="Home"
-        tagline="One day at a time."
-        subline={identityLine(profile)}
-        action={<button className="header-link" onClick={() => setSheet({ mode: 'manage' })}>Edit</button>}
-      />
+      <header className="home-top">
+        <h1 className="visually-hidden">Home</h1>
+        <p className="home-date">{new Date(now).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+        <button className="header-link" onClick={() => setSheet({ mode: 'manage' })}>Edit</button>
+      </header>
+      {identityLine(profile) && <p className="page-subline home-identity" data-testid="identity-line">{identityLine(profile)}</p>}
+
+      {habits.map((h) => {
+        const u = undoableReset(h, now)
+        if (!u || bannerDismissed(h.resets.at(-1).at)) return null
+        return (
+          <UndoBanner key={h.id} habit={h} until={u.until} now={now} today={today} showName={habits.length > 1}
+            onUndo={() => editor.undoLast(h.id)}
+            onDismiss={() => { dismissBanner(h.resets.at(-1).at); setBannerTick((t) => t + 1) }} />
+        )
+      })}
 
       {notice && (
         <div className="notice" role="status">
           <span>{notice}</span>
           <button className="icon-btn" onClick={() => setNotice('')} aria-label="Dismiss">✕</button>
         </div>
-      )}
-
-      {walkInProgress && (
-        <button className="resume-walk" onClick={onUrge}>
-          <span>Your walk is waiting</span>
-          <span className="resume-walk-go">Back to your walk ›</span>
-        </button>
       )}
 
       {rideProminent(profile) && !walkInProgress && (
@@ -109,23 +119,18 @@ function HomeTab({ onUrge, onOpenBackup, onRide = () => {} }) {
       {hero ? (
         <HeroPager hero={hero} days={days} since={since} segment={segment} label={label} milestones={milestones} today={today} profile={profile} />
       ) : (
-        <section className="empty">
-          <div className="empty-icon" aria-hidden="true">🌅</div>
+        <section className="empty" data-testid="home-empty">
+          <span className="empty-mark" aria-hidden="true"><SunriseIcon /></span>
           <h2>Every day counts</h2>
-          <p>Add the date you started, and Urge Walk will count your clean days. For now, it stays on this phone only.</p>
-          <button className="btn btn-primary btn-big" onClick={() => setSheet({ mode: 'add' })}>
-            Add your sober date
-          </button>
+          <p>Add your start date to begin counting.</p>
+          <button className="btn btn-primary btn-big" onClick={() => setSheet({ mode: 'add' })}>Add your start date</button>
           <button className="btn btn-ghost empty-restore" onClick={onOpenBackup}>Restore from a backup</button>
-          {isIOS() && (
-            <p className="empty-note">
-              On iPhone, the Home Screen app and Safari keep separate data. Add your date in the one you’ll use.
-            </p>
-          )}
         </section>
       )}
 
-      {hero && <NeverZero hero={hero} walks={walks} today={today} />}
+      <RideBar live={walkInProgress} onRide={onRide} onResume={onUrge} />
+
+      {hero && <NeverZero hero={hero} walks={walks} today={today} highlight={highlight} />}
 
       {(hero || walks.length > 0) && (
         <WalksCard walks={walks} range={range} onRange={handleRange} streak={hero ? days : null} now={now} since={allSince} />

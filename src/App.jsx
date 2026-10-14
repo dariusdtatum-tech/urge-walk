@@ -16,7 +16,9 @@ import { BREATHE_SAVED_MESSAGES, LOGGED_SAVED_MESSAGE } from './lib/walkMessages
 import { hasAnyData } from './lib/backup.js'
 import { resolveOnboarding } from './lib/profile.js'
 import { startWalkNow } from './lib/walkStart.js'
-import { appendWalk, buildBreatheRecord, buildLoggedRecord, lengthLabel, loadActiveWalk, loadWalkPrefs } from './lib/walkStorage.js'
+import { appendWalk, buildBreatheRecord, buildLoggedRecord, lengthLabel, loadActiveWalk, loadWalkPrefs, removeWalk } from './lib/walkStorage.js'
+import { markSaved, markStress } from './lib/calm.js'
+import { readObject, writeObject } from './lib/storage.js'
 
 // Two tabs, the center "Ride it out" button, two tabs.
 const LEFT_TABS = [
@@ -28,6 +30,8 @@ const RIGHT_TABS = [
   { id: 'you', label: 'You', Icon: YouIcon },
 ]
 const LONG_PRESS_MS = 550
+const TOAST_MS = 6500 // long enough to read and to reach Undo
+const LP_TIP_KEY = 'urgewalk.v1.longPressTipSeen'
 
 // A walk that's still going (not yet at the check-in screen).
 function liveWalkSaved() {
@@ -42,8 +46,12 @@ function App() {
   const [activeTab, setActiveTab] = useState(() => (liveWalkSaved() ? 'walk' : 'home'))
   // Focus mode: while a walk is live, the header and tab bar are hidden.
   const [focus, setFocus] = useState(() => liveWalkSaved())
-  // A short message shown after saving
+  // A short message shown after saving: '' or { text, undoId? } (a string is fine too)
   const [toast, setToast] = useState('')
+  // The first walk started by a long press explains itself once
+  const [lpTip, setLpTip] = useState(false)
+  // Bumped after an Undo so Home re-reads its numbers
+  const [dataVer, setDataVer] = useState(0)
   // When a walk note is tapped in the Journal, the Log opens with that walk
   const [focusWalkId, setFocusWalkId] = useState(null)
   // The Backup screen opens from Home or You; the tab bar stays the same
@@ -65,6 +73,7 @@ function App() {
   // Walk: starts immediately (remembered length) into the distraction-free live walk.
   function handleWalk() {
     startWalkNow()
+    markStress()
     setToast('') // the live walk stays free of distractions
     setShowRide(false)
     setFocus(true)
@@ -72,15 +81,19 @@ function App() {
   }
 
   function handleBreathe() {
+    markStress()
     setToast('')
     setShowRide(false)
     goTo('breathe')
   }
 
   function handleLog(note) {
-    appendWalk(buildLoggedRecord({ at: Date.now(), note }))
+    const record = buildLoggedRecord({ at: Date.now(), note })
+    appendWalk(record)
+    markSaved(record.id)
     setShowRide(false)
-    setToast(LOGGED_SAVED_MESSAGE)
+    setToast({ text: LOGGED_SAVED_MESSAGE, undoId: record.id })
+    setDataVer((v) => v + 1)
     goTo(activeTab === 'walk' || activeTab === 'breathe' ? 'home' : activeTab)
   }
 
@@ -91,6 +104,7 @@ function App() {
     press.current.timer = setTimeout(() => {
       press.current.fired = true
       navigator.vibrate?.(15)
+      if (!readObject(LP_TIP_KEY)) { writeObject(LP_TIP_KEY, { at: Date.now() }); setLpTip(true) }
       handleWalk()
     }, LONG_PRESS_MS)
   }
@@ -104,22 +118,26 @@ function App() {
     }
     navigator.vibrate?.(8)
     if (liveWalkSaved()) { setFocus(true); goTo('walk'); return }
+    markStress()
     setShowRide(true)
   }
 
   useEffect(() => {
     if (!toast) return undefined
-    const timer = setTimeout(() => setToast(''), 5000)
+    const timer = setTimeout(() => setToast(''), TOAST_MS)
     return () => clearTimeout(timer)
   }, [toast])
 
   function handleWalkSaved(message) {
+    markSaved(null)
+    setLpTip(false)
     setToast(message)
     goTo('home')
   }
 
   function handleBreatheSaved({ startedAt, endedAt, result, note }) {
     appendWalk(buildBreatheRecord({ startedAt, endedAt, result, note }))
+    markSaved(null)
     setToast(BREATHE_SAVED_MESSAGES[result || 'skip'])
     goTo('home')
   }
@@ -130,9 +148,9 @@ function App() {
   if (showBackup) {
     view = <BackupScreen onBack={() => setShowBackup(false)} backLabel={activeTab === 'you' ? 'You' : 'Home'} />
   } else if (activeTab === 'home') {
-    view = <HomeTab onUrge={() => { setFocus(true); goTo('walk') }} onOpenBackup={() => setShowBackup(true)} onRide={() => setShowRide(true)} />
+    view = <HomeTab key={dataVer} onUrge={() => { setFocus(true); goTo('walk') }} onOpenBackup={() => setShowBackup(true)} onRide={() => { markStress(); setShowRide(true) }} />
   } else if (activeTab === 'walk') {
-    view = <WalkTab onSaved={handleWalkSaved} onFocusChange={setFocus} onExit={exitWalk} />
+    view = <WalkTab longPressTip={lpTip} onSaved={handleWalkSaved} onFocusChange={setFocus} onExit={exitWalk} />
   } else if (activeTab === 'breathe') {
     view = <BreatheScreen onSave={handleBreatheSaved} onCancel={() => goTo('home')} />
   } else if (activeTab === 'you') {
@@ -203,8 +221,14 @@ function App() {
     <div className={inFocus ? 'app app-focus' : 'app'}>
       <Waves />
       {toast && !inFocus && (
-        <div className="toast" data-testid="toast" role="status" onClick={() => setToast('')}>
-          {toast}
+        <div className={toast.undoId ? 'toast toast-undo' : 'toast'} data-testid="toast" role="status">
+          <span>{toast.text ?? toast}</span>
+          {toast.undoId && (
+            <button type="button" className="toast-action" data-testid="toast-undo"
+              onClick={() => { removeWalk(toast.undoId); markSaved(null, 0); setToast('Removed. Nothing was saved.'); setDataVer((v) => v + 1) }}>
+              Undo
+            </button>
+          )}
         </div>
       )}
 

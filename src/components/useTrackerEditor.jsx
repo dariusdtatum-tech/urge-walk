@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { resetTracker, undoReset, undoableReset } from '../lib/homeIdeas.js'
 import { loadWalks } from '../lib/walkStorage.js'
+import { markStress } from '../lib/calm.js'
 import { todayISO } from '../lib/cleanTime.js'
 import { makePrimary } from '../lib/homeStats.js'
 import { backfillTracker, loadMilestones, removeTracker } from '../lib/milestones.js'
@@ -56,6 +57,7 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
   // Start a new count: history, milestones and the lifetime count are untouched.
   function handleReset(startDate) {
     const habit = habits.find((h) => h.id === sheet.habit.id)
+    markStress()
     const next = resetTracker(habit, startDate)
     update(habits.map((h) => (h.id === habit.id ? next : h)))
     setSheet(null)
@@ -73,6 +75,12 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
     update(next)
     setUndo(null)
     setSheet(sheet.from === 'manage' ? { mode: 'manage' } : null)
+  }
+
+  // Undo from the Home banner (any time in the 24 hours).
+  function undoLast(id) {
+    update(habits.map((h) => (h.id === id && undoableReset(h) ? undoReset(h) : h)))
+    setUndo(null)
   }
 
   const sheets = (
@@ -119,5 +127,5 @@ export function useTrackerEditor({ today, onOpenBackup, onMilestones }) {
       )}
     </>
   )
-  return { habits, recoveredInitially: initial.recovered, notice, setNotice, sheet, setSheet, sheets }
+  return { undoLast, habits, recoveredInitially: initial.recovered, notice, setNotice, sheet, setSheet, sheets }
 }

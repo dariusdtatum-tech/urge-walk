@@ -90,6 +90,13 @@ export function appendWalk(record, storage = globalThis.localStorage) {
   return writeList(WALKS_KEY, 'walks', [...walks, record], storage)
 }
 
+// Remove one record by id (Undo right after a save). Returns true if something was removed.
+export function removeWalk(id, storage = globalThis.localStorage) {
+  const { walks } = loadWalks(storage)
+  const next = walks.filter((w) => w.id !== id)
+  return next.length !== walks.length && writeList(WALKS_KEY, 'walks', next, storage)
+}
+
 // ---------- Walk in progress ----------
 
 function validActiveWalk(w) {

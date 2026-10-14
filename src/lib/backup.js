@@ -239,6 +239,27 @@ export function shouldNudge(meta, hasData, now = Date.now()) {
   return true
 }
 
+// "Last backup today", "yesterday", "N days ago", or "No backup yet" (for You).
+export function lastBackupLabel(meta, now = Date.now()) {
+  const at = meta?.lastBackupAt ? Date.parse(meta.lastBackupAt) : NaN
+  if (!Number.isFinite(at)) return 'No backup yet'
+  const start = (t) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() }
+  const days = Math.round((start(now) - start(at)) / DAY_MS)
+  if (days <= 0) return 'Last backup today'
+  if (days === 1) return 'Last backup yesterday'
+  return `Last backup ${days} days ago`
+}
+
+// "Reset app": removes everything Urge Walk keeps on this phone (all urgewalk.* keys).
+// The screen only calls this after a backup file was saved. Returns how many keys were removed.
+export function clearAllData(storage = globalThis.localStorage) {
+  const keys = []
+  for (let i = 0; i < storage.length; i++) keys.push(storage.key(i))
+  const ours = keys.filter((k) => typeof k === 'string' && k.startsWith('urgewalk.'))
+  for (const k of ours) storage.removeItem(k)
+  return ours.length
+}
+
 // ---------- Sharing / downloading the file (browser only) ----------
 
 // Returns 'shared', 'downloaded', or 'cancelled'. Throws only on real failures.

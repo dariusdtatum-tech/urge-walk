@@ -2,7 +2,7 @@ import { cleanCount, last30, lifetimeRidden } from '../lib/homeIdeas.js'
 
 // Never zero: the lifetime count of urges ridden out (never resets) and the last 30 days as dots.
 // Clean days are filled sea-glass dots; other days are a hollow outline. No red, no X.
-function NeverZero({ hero, walks, today }) {
+function NeverZero({ hero, walks, today, highlight = false }) {
   const days = last30(hero, today)
   const clean = cleanCount(days)
   const total = lifetimeRidden(walks)
@@ -11,7 +11,7 @@ function NeverZero({ hero, walks, today }) {
       <div className="nz-cols">
         <div>
           <p className="nz-k">Urges ridden out</p>
-          <p className="nz-n" data-testid="nz-lifetime">{total.toLocaleString()}</p>
+          <p className={highlight ? 'nz-n nz-pulse' : 'nz-n'} data-testid="nz-lifetime">{total.toLocaleString()}</p>
           <p className="nz-sub">lifetime · walks, breaths, logs</p>
         </div>
         <div>

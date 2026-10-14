@@ -81,3 +81,14 @@ export function FlameIcon() {
     </svg>
   )
 }
+
+// Empty states: a sun rising over the water
+export function SunriseIcon() {
+  return (
+    <svg {...base}>
+      <path d="M6.5 15a5.5 5.5 0 0 1 11 0" />
+      <path d="M3 18.5h18M6 21h12" />
+      <path d="M12 4.5v2.2M5.6 7.6l1.5 1.5M18.4 7.6l-1.5 1.5" />
+    </svg>
+  )
+}
