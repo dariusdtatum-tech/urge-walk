@@ -4,6 +4,7 @@ import {
   shareOrDownload, summaryText, undoImport, validateBackup,
 } from '../lib/backup.js'
 import ConfirmDialog from './ConfirmDialog.jsx'
+import { isIOS } from '../lib/persist.js'
 
 const formatWhen = (iso) => new Date(iso).toLocaleString(undefined, {
   month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -88,6 +89,11 @@ function BackupScreen({ onBack, backLabel = 'Home', onRestored }) {
         <span aria-hidden="true">🔒</span> Your backup file holds everything in the app, including your private
         journal. Keep it somewhere safe, like iCloud Drive or the Files app, and don’t share it.
       </p>
+      {isIOS() && (
+        <p className="privacy-note" data-testid="ios-storage-note">
+          On iPhone, the Home Screen app and Safari keep separate data. Use the one you’ll keep using, and back up from there.
+        </p>
+      )}
 
       {message && (
         <p className={message.kind === 'ok' ? 'backup-msg ok' : 'backup-msg error'} role={message.kind === 'ok' ? 'status' : 'alert'}>
