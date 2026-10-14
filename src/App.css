@@ -678,7 +678,7 @@
   font-variant-numeric: tabular-nums;
 }
 .stat-label { font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
-.stat-sub { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+.stat-sub { font-size: 0.78rem; color: var(--text); white-space: nowrap; }
 
 .chart { display: block; width: 100%; height: auto; margin-top: 10px; overflow: visible; }
 .chart-line { stroke: var(--ring-a); stroke-width: 2.2; stroke-linecap: round; }
@@ -1695,3 +1695,15 @@ a.settings-row { text-decoration: none; color: inherit; }
 .you-theme .segment { min-height: 44px; }
 .ride-log-result { margin: 0 0 12px; }
 .ride-log-result .segment { min-height: 44px; }
+
+/* Week view: a soft sea-glass bracket over the chart for each run of 2+ days with an urge passed.
+   The bracket is decoration; the "N days" label carries the meaning (navy text on the card). */
+.day-runs { display: grid; list-style: none; margin: 0 0 2px; padding: 0; }
+.day-run { display: flex; flex-direction: column; align-items: center; padding: 0 6px; min-width: 0; animation: run-in 0.5s ease-out both; }
+.day-run-bracket {
+  align-self: stretch; height: 7px;
+  border: 2px solid var(--ring-b); border-bottom: none; border-radius: 8px 8px 0 0;
+}
+.day-run-label { margin-bottom: 2px; font-size: 0.75rem; font-weight: 600; line-height: 1.3; color: var(--title); white-space: nowrap; }
+@keyframes run-in { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .day-run { animation: none; } }

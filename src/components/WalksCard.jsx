@@ -1,6 +1,8 @@
 import { RANGES, RANGE_IDS, bucketCounts, rangeBuckets, rangeStats, threeDayAverage } from '../lib/homeStats.js'
 import { FlameIcon } from './Icons.jsx'
 import WeekChart from './WeekChart.jsx'
+import { passedDayKeys, passedRuns } from '../lib/dayRuns.js'
+import { todayISO } from '../lib/cleanTime.js'
 
 // "Your walks": Week / Month / All time switches only what's inside this card.
 // The Streak chip is the clean-day streak and never changes with the range.
@@ -11,6 +13,8 @@ function WalksCard({ walks, range, onRange, streak, now, since }) {
   const values = range === 'month' ? threeDayAverage(counts) : counts
   // The chart counts every urge ridden out; say so once breathing or logged urges are in the mix.
   const mixed = walks.some((w) => w.kind && w.kind !== 'walk')
+  // Week only: soft brackets over runs of 2+ days with an urge passed.
+  const runs = range === 'week' ? passedRuns(buckets.map((b) => todayISO(b.first)), passedDayKeys(walks)) : []
   const caption = mixed ? RANGES[range].captionAll : RANGES[range].caption
 
   return (
@@ -45,7 +49,7 @@ function WalksCard({ walks, range, onRange, streak, now, since }) {
         )}
       </div>
 
-      <WeekChart buckets={buckets} counts={values} caption={caption} dots={range === 'week'} />
+      <WeekChart buckets={buckets} counts={values} caption={caption} dots={range === 'week'} runs={runs} />
     </section>
   )
 }

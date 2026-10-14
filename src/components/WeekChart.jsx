@@ -6,7 +6,7 @@ const PAD_TOP = 10
 const PAD_BOTTOM = 6
 
 // "Urges walked" line for the chosen range. The current day/week is highlighted.
-function WeekChart({ buckets, counts, caption, dots = true }) {
+function WeekChart({ buckets, counts, caption, dots = true, runs = [] }) {
   // Half a column on each side, so each point sits right above its label.
   const padX = W / (2 * counts.length)
   const { max, points } = chartPoints(counts, { width: W, height: H, padX, padTop: PAD_TOP, padBottom: PAD_BOTTOM })
@@ -20,6 +20,17 @@ function WeekChart({ buckets, counts, caption, dots = true }) {
 
   return (
     <div className="chart-wrap" data-testid="walks-chart" data-points={n}>
+      {runs.length > 0 && (
+        <ul className="day-runs" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }} data-testid="day-runs">
+          {runs.map((r) => (
+            <li key={r.start} className="day-run" style={{ gridColumn: `${r.start + 1} / ${r.end + 2}` }}
+              aria-label={`${r.length} days in a row with an urge passed, ${buckets[r.start].label} to ${buckets[r.end].label}`}>
+              <span className="day-run-label" aria-hidden="true">{r.length} days</span>
+              <span className="day-run-bracket" aria-hidden="true" />
+            </li>
+          ))}
+        </ul>
+      )}
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Urges walked, ${Math.round(total)} in this range`} data-max={max}>
         <defs>
           <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
